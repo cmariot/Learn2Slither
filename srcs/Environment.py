@@ -46,6 +46,8 @@ class Environment:
             self.new_apple(RED_APPLE)
         self.current_red_apples = self.nb_red_apples
 
+        self.is_game_over = False
+
         print(self)
 
     def get_random_empty_cell(self):
@@ -67,40 +69,48 @@ class Environment:
         else:
             if apple == RED_APPLE:
                 self.current_red_apples -= 1
+                return self.game_over("Can't place a new red apple")
             elif apple == GREEN_APPLE:
                 self.current_green_apples -= 1
                 if self.current_green_apples == 0:
-                    self.snake.win()
+                    return self.game_over("No more green apples, you win!")
 
     def move_snake(self, direction):
         if direction in self.snake.directions:
             self.snake.direction = self.snake.directions[direction]
-            print(f"Moving the snake {direction}")
-            self.snake.move(self)
+            is_game_over = self.snake.move(self)
+            if is_game_over:
+                self.game_over()
 
-    # def get_state(self):
+    def get_state(self):
 
-    #     # Get the snake head position
-    #     x_head, y_head = self.snake.body[0]
+        # Get the snake head position
+        x_head, y_head = self.snake.body[0]
 
-    #     # Create a 2d array with column and row, fill with spaces otherwise
-    #     state = [
-    #         [
-    #             self[y][x] if x == x_head or y == y_head else ' '
-    #             for x in range(self.width)
-    #         ]
-    #         for y in range(self.height)
-    #     ]
+        # Create a 2d array with column and row, fill with spaces otherwise
+        state = [
+            [
+                self[y][x] if x == x_head or y == y_head else ' '
+                for x in range(self.width)
+            ]
+            for y in range(self.height)
+        ]
 
-    #     # Print the state
-    #     for row in state:
-    #         print(' '.join(row))
-    #     print()
+        # Print the state
+        for row in state:
+            print(' '.join(row))
+        print()
 
-    #     return state
+        return state
 
-    # def get_move(self, state):
-    #     return random.choice(list(self.snake.directions.keys()))
+    def game_over(self, message=""):
+        if message:
+            print("GAME OVER:", message, "\n")
+        self.is_game_over = True
+        return True
+
+    def is_running(self):
+        return not self.is_game_over
 
     def __getitem__(self, key):
         return self.board[key]

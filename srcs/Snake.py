@@ -4,7 +4,7 @@ from constants import SNAKE_HEAD, SNAKE_BODY, RED_APPLE, GREEN_APPLE, WALL, EMPT
 
 class Snake:
 
-    initial_snake_length = 3
+    initial_snake_length = 6
 
     directions = {
         'up': (0, -1),
@@ -67,15 +67,15 @@ class Snake:
         x, y = new_head
         next_cell = board[y][x]
         if next_cell == WALL:
-            raise ValueError("Snake hit the wall")
+            return self.die("Snake hit the wall")
         elif next_cell == SNAKE_BODY:
-            raise ValueError("Snake collision")
+            return self.die("Snake collision")
         elif next_cell == RED_APPLE:
-            self.shrink(board, new_head, x, y)
+            return self.shrink(board, new_head, x, y)
         elif next_cell == GREEN_APPLE:
-            self.grow(board, new_head, x, y)
+            return self.grow(board, new_head, x, y)
         else:
-            self.move_forward(board, new_head, x, y)
+            return self.move_forward(board, new_head, x, y)
 
     def move_forward(self, board, new_head, x, y):
         board[y][x] = SNAKE_HEAD
@@ -84,6 +84,7 @@ class Snake:
         x, y = self.body[-1]
         board[y][x] = EMPTY
         self.body = [new_head] + self.body[:-1]
+        return False
 
     def grow(self, board, new_head, x, y):
         # Green apple : grow the snake and add a new Green apple
@@ -92,11 +93,12 @@ class Snake:
         board[y][x] = SNAKE_BODY
         self.body = [new_head] + self.body
         board.new_apple(GREEN_APPLE)
+        return False
 
     def shrink(self, board, new_head, x, y):
         board[y][x] = SNAKE_HEAD
         if len(self.body) == 1:
-            self.die()
+            return self.die("Snake has no more body")
         if len(self.body) > 2:
             x, y = self.body[0]
             board[y][x] = SNAKE_BODY
@@ -106,10 +108,8 @@ class Snake:
         board[y][x] = EMPTY
         self.body = [new_head] + self.body[:-2]
         board.new_apple(RED_APPLE)
+        return False
 
-    def win(self):
-        print("You win")
-        exit(0)
-
-    def die(self):
-        raise ValueError("Snake died")
+    def die(self, message):
+        print(message)
+        return True

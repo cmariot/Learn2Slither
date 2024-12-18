@@ -6,7 +6,7 @@ import pygame
 
 class GraphicalUserInteface:
 
-    FPS = 10
+    FPS = 5
     CELL_SIZE = 40
 
     def __init__(self, environment: Environment):
@@ -59,6 +59,7 @@ class GraphicalUserInteface:
                 if game_mode.is_human():
                     if key in ("up", "down", "left", "right"):
                         environment.move_snake(key)
+        return True
 
     def close(self):
         pygame.quit()
