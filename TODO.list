@@ -1,0 +1,8 @@
+# BOARD
+
+- [X] Big snake on small board : init can fail, infinite loop when snake is too big
+- [X] Win condition when no more green apples
+- [X] Walls
+
+
+# STATE
