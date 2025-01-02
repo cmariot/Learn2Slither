@@ -1,4 +1,6 @@
 flake8
 pygame==2.6.0
 pandas
+matplotlib
+PyQt6
 

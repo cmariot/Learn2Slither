@@ -3,6 +3,7 @@ from GraphicalUserInterface import GraphicalUserInteface
 from game_mode import GameMode
 from Interpreter import Interpreter
 from Agent import Agent
+import matplotlib.pyplot as plt
 
 
 def main():
@@ -17,11 +18,15 @@ def main():
     print("Press 'q' or 'escape' to exit\n")
     print(f"Gaming in {game_mode} mode\n")
 
+    plt.ion()
+    fig, ax = plt.subplots()
+    ax.set_title("Score evolution")
+    plt.show()
+
     training = True
     while training:
 
-        # TODO: environment.reset()
-        environment = Environment()
+        environment.reset()
 
         while environment.is_running():
 
@@ -33,16 +38,24 @@ def main():
                 action = agent.choose_action(state)
                 is_alive = environment.move_snake(action)
                 reward = agent.get_reward(state, action, is_alive)
+                environment.score += reward
                 print(f"Action: {action}, Reward: {reward}")
-                # agent.learn(state, action, reward, environment.get_state())
+                agent.learn(state, action, reward, environment.get_state())
 
             gui.draw(environment)
+
+            # Clear the previous plot
+            ax.clear()
+            plt.plot(environment.scores, color="blue")
+            fig.canvas.draw()
+            plt.pause(0.1)
 
 
 if __name__ == "__main__":
     try:
         main()
-    # except Exception as e:
-    #     print(e)
+    except Exception as e:
+        print(e)
     except KeyboardInterrupt:
         print("\nExiting...")
+        plt.ioff()  # TODO: Turn off interactive mode before exiting
