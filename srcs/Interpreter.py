@@ -1,6 +1,7 @@
 from Environment import Environment
 from constants import SNAKE_HEAD, SNAKE_BODY, WALL, GREEN_APPLE, RED_APPLE, EMPTY
 import pandas
+import numpy as np
 
 
 class Interpreter:
@@ -66,7 +67,7 @@ class Interpreter:
             ):
                 x += dx
                 y += dy
-                distance += 1
+                distance = 1
                 if (
                     state[y][x] == WALL and
                     distance < dictionary[f'{direction}_wall']
@@ -100,6 +101,11 @@ class Interpreter:
 
         # Print the dataframe
         dataframe = pandas.DataFrame(dictionary, index=['distance'])
-        print(dataframe.transpose())
+        print(dataframe.transpose(), '\n')
 
-        return dataframe.to_numpy().flatten()
+        # print(type(dataframe.to_numpy()))
+        # print(dataframe.to_numpy()[0])
+        # exit()
+        numpy_array = np.array(dataframe.to_numpy()[0])
+
+        return numpy_array

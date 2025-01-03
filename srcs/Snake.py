@@ -4,7 +4,7 @@ from constants import SNAKE_HEAD, SNAKE_BODY, RED_APPLE, GREEN_APPLE, WALL, EMPT
 
 class Snake:
 
-    initial_snake_length = 6
+    initial_snake_length = 1
 
     directions = {
         'up': (0, -1),

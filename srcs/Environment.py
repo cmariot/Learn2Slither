@@ -5,13 +5,15 @@ from constants import RED_APPLE, GREEN_APPLE, WALL, EMPTY
 
 class Environment:
 
-    nb_red_apples = 1
-    nb_green_apples = 2
+    nb_red_apples = 0
+    nb_green_apples = 1
 
-    GRID_SIZE = 10
+    GRID_SIZE = 2
     width = height = GRID_SIZE + 2
 
     def __init__(self):
+
+        self.nb_games = 0
 
         # Create the board with all cells set to 0 and walls around
         self.board = [
@@ -48,7 +50,10 @@ class Environment:
 
         self.is_game_over = False
 
-        print(self)
+    def reset(self):
+        nb_games = self.nb_games
+        self.__init__()
+        self.nb_games = nb_games + 1
 
     def get_random_empty_cell(self):
         empty_cells = {
@@ -96,11 +101,6 @@ class Environment:
             for y in range(self.height)
         ]
 
-        # Print the state
-        for row in state:
-            print(' '.join(row))
-        print()
-
         return state
 
     def game_over(self, message=""):
@@ -116,9 +116,12 @@ class Environment:
         return self.board[key]
 
     def __str__(self):
-        res = ""
+        state = self.get_state()
+        res = "\033c"
+        idx = 0
         for row in self.board:
             for cell in row:
                 res += cell + " "
-            res += "\n"
+            res += "\t\t" + " ".join(state[idx]) + "\n"
+            idx += 1
         return res
