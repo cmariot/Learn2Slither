@@ -3,7 +3,7 @@ from GraphicalUserInterface import GraphicalUserInteface
 from game_mode import GameMode
 from Interpreter import Interpreter
 from Agent import Agent
-# import random
+import matplotlib.pyplot as plt
 
 
 def main():
@@ -18,59 +18,51 @@ def main():
     print("Press 'q' or 'escape' to exit\n")
     print(f"Gaming in {game_mode} mode\n")
 
-    scores = []
-    # mean_scores = []
+    with plt.ion():
 
-    training = True
-    while training:
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.set_title("Score evolution")
+        x = []
+        y = []
+        li, = ax.plot(x, y)
+        fig.canvas.draw()
+        plt.show(block=False)
 
-        score = 0
-        environment.reset()
+        training = True
+        while training:
 
-        while environment.is_running():
+            environment.reset()
 
-            gui.handle_key_pressed(environment, game_mode)
+            while environment.is_running():
 
-            if game_mode.is_ai():
-                print(environment)
-                state = interpreter.interpret(environment)
-                action = agent.choose_action(state, environment.nb_games)
-                is_alive = environment.move_snake(action)
-                reward = agent.get_reward(state, action, is_alive)
-                score += reward
-                new_state = interpreter.interpret(environment)
-                action = {'up': 0, 'down': 1, 'left': 2, 'right': 3}[action]
-                agent.train_short_memory(
-                    state,
-                    action,
-                    reward,
-                    new_state,
-                    is_alive
-                )
-                agent.learn(
-                    state,
-                    action,
-                    reward,
-                    new_state,
-                    is_alive
-                )
-                if not is_alive:
-                    agent.train_long_memory()
+                gui.handle_key_pressed(environment, game_mode)
 
-                    scores.append(score)
+                if game_mode.is_ai():
+                    print(environment)
+                    state = interpreter.interpret(environment)
+                    action = agent.choose_action(state, environment.nb_games)
+                    is_alive = environment.move_snake(action)
+                    reward = agent.get_reward(state, action, is_alive)
+                    environment.score += 1
+                    agent.learn(
+                        state,
+                        action,
+                        reward,
+                        environment.get_state(),
+                        is_alive
+                    )
 
-                    # Save the scores in a file
-                    # score = len(environment.snake.body)
-                    import numpy as np
-                    with open("scores.txt", "a") as f:
-                        f.write(f"{int(np.mean(scores))}\n")
+                gui.draw(environment)
 
-                    # break
-
-                    # mean_score = sum(scores) / len(scores)
-                    # mean_scores.append(mean_score)
-
-            gui.draw(environment)
+            x.append(environment.game_number)
+            y.append(environment.score)
+            li.set_xdata(x)
+            li.set_ydata(y)
+            ax.relim()
+            ax.autoscale_view(True, True, True)
+            fig.canvas.draw()
+            plt.pause(0.1)
 
 
 if __name__ == "__main__":
@@ -80,3 +72,4 @@ if __name__ == "__main__":
         print(e)
     except KeyboardInterrupt:
         print("\nExiting...")
+        plt.ioff()  # TODO: Turn off interactive mode before exiting

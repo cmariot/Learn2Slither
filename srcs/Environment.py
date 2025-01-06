@@ -8,7 +8,7 @@ class Environment:
     nb_red_apples = 0
     nb_green_apples = 1
 
-    GRID_SIZE = 2
+    GRID_SIZE = 10
     width = height = GRID_SIZE + 2
 
     def __init__(self):
@@ -50,10 +50,46 @@ class Environment:
 
         self.is_game_over = False
 
+        self.game_number = 0
+
+        self.score = 0
+        self.scores = []
+
+        print(self)
+
     def reset(self):
-        nb_games = self.nb_games
-        self.__init__()
-        self.nb_games = nb_games + 1
+
+        # Reset the board with all cells set to 0 and walls around
+        self.board = [
+            [WALL if (
+                x == 0 or x == self.width - 1 or
+                y == 0 or y == self.height - 1
+             ) else EMPTY
+             for x in range(self.width)]
+            for y in range(self.height)
+        ]
+
+        # Set the snake on the board
+        self.snake = Snake(self)
+
+        # Set the green apples on the board
+        for _ in range(self.nb_green_apples):
+            self.new_apple(GREEN_APPLE)
+        self.current_green_apples = self.nb_green_apples
+
+        # Set the red apples on the board
+        for _ in range(self.nb_red_apples):
+            self.new_apple(RED_APPLE)
+        self.current_red_apples = self.nb_red_apples
+
+        self.is_game_over = False
+
+        self.game_number += 1
+
+        self.scores.append(self.score)
+        self.score = 0
+
+        print(f"Game {self.game_number}:")
 
     def get_random_empty_cell(self):
         empty_cells = {
@@ -101,6 +137,11 @@ class Environment:
             for y in range(self.height)
         ]
 
+        # Print the state
+        # for row in state:
+        #     print(' '.join(row))
+        # print()
+
         return state
 
     def game_over(self, message=""):
@@ -116,12 +157,18 @@ class Environment:
         return self.board[key]
 
     def __str__(self):
-        state = self.get_state()
-        res = "\033c"
-        idx = 0
+
+        res = ""
         for row in self.board:
             for cell in row:
                 res += cell + " "
-            res += "\t\t" + " ".join(state[idx]) + "\n"
-            idx += 1
+            res += "\n"
+
+        state = self.get_state()
+        res += "\n"
+        for row in state:
+            for cell in row:
+                res += cell + " "
+            res += "\n"
+
         return res
