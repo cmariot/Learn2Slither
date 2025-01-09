@@ -52,7 +52,13 @@ class Snake:
                 break
 
         self.body = body
-        self.direction = random.choice(list(self.directions.values()))
+        # Determine the direction of the snake
+        if len(body) > 1:
+            x_head, y_head = body[0]
+            x_next, y_next = body[1]
+            self.direction = (x_head - x_next, y_head - y_next)
+        else:
+            self.direction = random.choice(list(self.directions.values()))
 
         # Set the snake on the board
         for x, y in self.body:
@@ -111,5 +117,20 @@ class Snake:
         return False
 
     def die(self, message):
-        print(message)
+        print("Game over:", message)
         return True
+
+    def get_body_index(self, x, y):
+
+        """
+        This method returns the index of the body part at position (x, y).
+        """
+
+        for index, (body_x, body_y) in enumerate(self.body):
+            if body_x == x and body_y == y:
+                return index
+        return -1
+
+    def get_snake_length(self):
+        return len(self.body)
+

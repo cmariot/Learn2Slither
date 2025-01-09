@@ -8,6 +8,10 @@ ENV_NAME=.venv
 BLUE='\033[0;34m'
 NC='\033[0m'
 
+# Disable the Pygame output
+export PYGAME_HIDE_SUPPORT_PROMPT="hide"
+
+
 # Create a virtualenv based on the ENV_NAME variable.
 python3 -m venv $ENV_NAME
 echo "${BLUE}${ENV_NAME} virtual environment has been created.${NC}"
@@ -32,5 +36,5 @@ python3 -m pip freeze
 echo
 
 echo "${BLUE}Running the program...${NC}"
-python3 ./srcs/main.py
 
+python3 ./srcs/main.py

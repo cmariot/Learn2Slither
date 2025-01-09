@@ -5,8 +5,8 @@ from constants import RED_APPLE, GREEN_APPLE, WALL, EMPTY
 
 class Environment:
 
-    nb_red_apples = 0
-    nb_green_apples = 1
+    nb_red_apples = 1
+    nb_green_apples = 2
 
     GRID_SIZE = 10
     width = height = GRID_SIZE + 2
@@ -55,8 +55,6 @@ class Environment:
         self.score = 0
         self.scores = []
 
-        print(self)
-
     def reset(self):
 
         # Reset the board with all cells set to 0 and walls around
@@ -88,8 +86,6 @@ class Environment:
 
         self.scores.append(self.score)
         self.score = 0
-
-        print(f"Game {self.game_number}:")
 
     def get_random_empty_cell(self):
         empty_cells = {
@@ -136,11 +132,6 @@ class Environment:
             ]
             for y in range(self.height)
         ]
-
-        # Print the state
-        # for row in state:
-        #     print(' '.join(row))
-        # print()
 
         return state
 

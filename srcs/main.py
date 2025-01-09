@@ -3,66 +3,53 @@ from GraphicalUserInterface import GraphicalUserInteface
 from game_mode import GameMode
 from Interpreter import Interpreter
 from Agent import Agent
-import matplotlib.pyplot as plt
+import pyfiglet
+
+
+def header(game_mode):
+    print(pyfiglet.figlet_format("Learn2Slither"))
+    print("Welcome to Learn2Slither!")
+    print("Move the snake with the arrow keys")
+    print("Press 'space' to switch between human and auto mode")
+    print("Press 'q' or 'escape' to exit\n")
+    print(f"Gaming in {game_mode} mode\n")
 
 
 def main():
 
     environment = Environment()
-    gui = GraphicalUserInteface(environment)
-    game_mode = GameMode("human")
     interpreter = Interpreter()
     agent = Agent()
+    game_mode = GameMode("human")
+    gui = GraphicalUserInteface(environment)
 
-    print("Press 'space' to switch between human and auto mode")
-    print("Press 'q' or 'escape' to exit\n")
-    print(f"Gaming in {game_mode} mode\n")
+    header(game_mode)
 
-    with plt.ion():
+    training = True
+    while training:
 
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.set_title("Score evolution")
-        x = []
-        y = []
-        li, = ax.plot(x, y)
-        fig.canvas.draw()
-        plt.show(block=False)
+        environment.reset()
 
-        training = True
-        while training:
+        while environment.is_running():
 
-            environment.reset()
+            gui.handle_key_pressed(environment, game_mode)
 
-            while environment.is_running():
+            if game_mode.is_ai():
+                state = interpreter.interpret(environment)
+                action = agent.choose_action(state, environment.game_number)
+                is_alive = environment.move_snake(action)
+                reward = interpreter.get_reward(state, action, is_alive)
 
-                gui.handle_key_pressed(environment, game_mode)
+                agent.learn(
+                    state,
+                    action,
+                    reward,
+                    interpreter.interpret(environment),
+                    is_alive
+                )
 
-                if game_mode.is_ai():
-                    print(environment)
-                    state = interpreter.interpret(environment)
-                    action = agent.choose_action(state, environment.nb_games)
-                    is_alive = environment.move_snake(action)
-                    reward = agent.get_reward(state, action, is_alive)
-                    environment.score += 1
-                    agent.learn(
-                        state,
-                        action,
-                        reward,
-                        environment.get_state(),
-                        is_alive
-                    )
-
-                gui.draw(environment)
-
-            x.append(environment.game_number)
-            y.append(environment.score)
-            li.set_xdata(x)
-            li.set_ydata(y)
-            ax.relim()
-            ax.autoscale_view(True, True, True)
-            fig.canvas.draw()
-            plt.pause(0.1)
+            gui.draw(environment)
+            environment.score += 1
 
 
 if __name__ == "__main__":
@@ -72,4 +59,3 @@ if __name__ == "__main__":
         print(e)
     except KeyboardInterrupt:
         print("\nExiting...")
-        plt.ioff()  # TODO: Turn off interactive mode before exiting
