@@ -83,17 +83,17 @@ class GraphicalUserInteface:
         self.screen.fill((0, 0, 0))
         for y, row in enumerate(environment.board):
             for x, cell in enumerate(row):
-                cell = environment.board[y][x]
+                cell = environment.board[x][y]
                 if (x + y) % 2 == 0:
-                    cell_color = (235, 235, 235)
+                    cell_color = (170, 215, 81)
                 else:
-                    cell_color = (255, 255, 255)
+                    cell_color = (162, 209, 73)
                 pygame.draw.rect(
                     self.screen,
                     cell_color,
                     (
                         x * self.CELL_SIZE, y * self.CELL_SIZE,
-                        self.CELL_SIZE - 1, self.CELL_SIZE - 1
+                        self.CELL_SIZE, self.CELL_SIZE
                     )
                 )
                 if cell == SNAKE_HEAD or cell == SNAKE_BODY:
@@ -207,23 +207,26 @@ class GraphicalUserInteface:
                 elif cell == RED_APPLE:
                     self.screen.blit(
                         self.red_apple,
-                        (x * self.CELL_SIZE + 0.25 * self.CELL_SIZE, y * self.CELL_SIZE + 0.25 * self.CELL_SIZE)
+                        (
+                            x * self.CELL_SIZE + 0.25 * self.CELL_SIZE,
+                            y * self.CELL_SIZE + 0.25 * self.CELL_SIZE
+                        )
                     )
                 elif cell == GREEN_APPLE:
                     self.screen.blit(
                         self.green_apple,
-                        (x * self.CELL_SIZE + 0.25 * self.CELL_SIZE, y * self.CELL_SIZE + 0.25 * self.CELL_SIZE)
+                        (
+                            x * self.CELL_SIZE + 0.25 * self.CELL_SIZE,
+                            y * self.CELL_SIZE + 0.25 * self.CELL_SIZE
+                        )
                     )
-
-                else:
-                    if cell == WALL:
-                        cell_color = (50, 50, 50)
+                elif cell == WALL:
                     pygame.draw.rect(
                         self.screen,
-                        cell_color,
+                        (87, 138, 52),
                         (
                             x * self.CELL_SIZE, y * self.CELL_SIZE,
-                            self.CELL_SIZE - 1, self.CELL_SIZE - 1
+                            self.CELL_SIZE, self.CELL_SIZE
                         )
                     )
         pygame.display.flip()

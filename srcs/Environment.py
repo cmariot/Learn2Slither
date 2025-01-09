@@ -92,7 +92,7 @@ class Environment:
             (x, y)
             for x in range(1, self.width - 1)
             for y in range(1, self.height - 1)
-            if self.board[y][x] == EMPTY
+            if self.board[x][y] == EMPTY
         }
         if not empty_cells:
             return None, None
@@ -102,7 +102,7 @@ class Environment:
     def new_apple(self, apple):
         x, y = self.get_random_empty_cell()
         if x is not None and y is not None:
-            self.board[y][x] = apple
+            self.board[x][y] = apple
         else:
             if apple == RED_APPLE:
                 self.current_red_apples -= 1
@@ -127,7 +127,7 @@ class Environment:
         # Create a 2d array with column and row, fill with spaces otherwise
         state = [
             [
-                self[y][x] if x == x_head or y == y_head else ' '
+                self[x][y] if x == x_head or y == y_head else ' '
                 for x in range(self.width)
             ]
             for y in range(self.height)

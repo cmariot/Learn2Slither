@@ -36,17 +36,18 @@ def main():
 
             if game_mode.is_ai():
                 state = interpreter.interpret(environment)
-                action = agent.choose_action(state, environment.game_number)
-                is_alive = environment.move_snake(action)
-                reward = interpreter.get_reward(state, action, is_alive)
+                print('\n\n')
+                # action = agent.choose_action(state, environment.game_number)
+                # is_alive = environment.move_snake(action)
+                # reward = interpreter.get_reward(state, action, is_alive)
 
-                agent.learn(
-                    state,
-                    action,
-                    reward,
-                    interpreter.interpret(environment),
-                    is_alive
-                )
+                # agent.learn(
+                #     state,
+                #     action,
+                #     reward,
+                #     interpreter.interpret(environment),
+                #     is_alive
+                # )
 
             gui.draw(environment)
             environment.score += 1

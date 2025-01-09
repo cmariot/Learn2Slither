@@ -62,16 +62,16 @@ class Snake:
 
         # Set the snake on the board
         for x, y in self.body:
-            board.board[y][x] = SNAKE_BODY
+            board.board[x][y] = SNAKE_BODY
         x, y = self.body[0]
-        board.board[y][x] = SNAKE_HEAD
+        board.board[x][y] = SNAKE_HEAD
 
     def move(self, board):
         head_x, head_y = self.body[0]
         dir_x, dir_y = self.direction
         new_head = (head_x + dir_x, head_y + dir_y)
         x, y = new_head
-        next_cell = board[y][x]
+        next_cell = board[x][y]
         if next_cell == WALL:
             return self.die("Snake hit the wall")
         elif next_cell == SNAKE_BODY:
@@ -84,34 +84,34 @@ class Snake:
             return self.move_forward(board, new_head, x, y)
 
     def move_forward(self, board, new_head, x, y):
-        board[y][x] = SNAKE_HEAD
+        board[x][y] = SNAKE_HEAD
         x, y = self.body[0]
-        board[y][x] = SNAKE_BODY
+        board[x][y] = SNAKE_BODY
         x, y = self.body[-1]
-        board[y][x] = EMPTY
+        board[x][y] = EMPTY
         self.body = [new_head] + self.body[:-1]
         return False
 
     def grow(self, board, new_head, x, y):
         # Green apple : grow the snake and add a new Green apple
-        board[y][x] = SNAKE_HEAD
+        board[x][y] = SNAKE_HEAD
         x, y = self.body[0]
-        board[y][x] = SNAKE_BODY
+        board[x][y] = SNAKE_BODY
         self.body = [new_head] + self.body
         board.new_apple(GREEN_APPLE)
         return False
 
     def shrink(self, board, new_head, x, y):
-        board[y][x] = SNAKE_HEAD
+        board[x][y] = SNAKE_HEAD
         if len(self.body) == 1:
             return self.die("Snake has no more body")
         if len(self.body) > 2:
             x, y = self.body[0]
-            board[y][x] = SNAKE_BODY
+            board[x][y] = SNAKE_BODY
         x, y = self.body[-2]
-        board[y][x] = EMPTY
+        board[x][y] = EMPTY
         x, y = self.body[-1]
-        board[y][x] = EMPTY
+        board[x][y] = EMPTY
         self.body = [new_head] + self.body[:-2]
         board.new_apple(RED_APPLE)
         return False
@@ -134,3 +134,5 @@ class Snake:
     def get_snake_length(self):
         return len(self.body)
 
+    def get_head_position(self):
+        return self.body[0]
