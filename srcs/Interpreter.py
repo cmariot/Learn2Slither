@@ -1,7 +1,7 @@
 from Environment import Environment
 import numpy as np
 import pandas
-from constants import EMPTY, WALL, GREEN_APPLE, RED_APPLE, SNAKE_BODY, SNAKE_HEAD
+from constants import WALL, GREEN_APPLE, RED_APPLE, SNAKE_BODY
 
 
 class Interpreter:
@@ -105,7 +105,3 @@ class Interpreter:
         print(dataframe.T)
         numpy_array = np.array(dataframe.to_numpy()[0])
         return numpy_array
-
-    def get_reward(self, state, action, snake_alive):
-        reward = 0
-        return reward

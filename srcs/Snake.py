@@ -2,6 +2,12 @@ import random
 from constants import SNAKE_HEAD, SNAKE_BODY, RED_APPLE, GREEN_APPLE, WALL, EMPTY
 
 
+NEGATIVE_REWARD = -100  # Manger une pomme rouge
+POSITIVE_REWARD = 100  # Manger une pomme verte
+SMALLLER_NEGATIVE_REWARD = -1  # Se deplacer
+BIGGER_NEGATIVE_REWARD = -1000  # Collision
+
+
 class Snake:
 
     initial_snake_length = 3
@@ -21,6 +27,7 @@ class Snake:
             for y in range(1, board.height - 1)
         }
 
+        is_first_body_part = True
         while True:
 
             # Choose a random head position
@@ -46,19 +53,26 @@ class Snake:
                     break
                 new_position = random.choice(possible_positions)
                 body.append(new_position)
+
+                if is_first_body_part:
+
+                    # Determine the direction of the snake
+                    if len(body) > 1:
+                        x_head, y_head = body[0]
+                        x_next, y_next = body[1]
+                        self.direction = (x_head - x_next, y_head - y_next)
+                    else:
+                        self.direction = random.choice(
+                            list(self.directions.values())
+                        )
+
+                    is_first_body_part = False
                 available_positions.remove(new_position)
 
             if len(body) == self.initial_snake_length:
                 break
 
         self.body = body
-        # Determine the direction of the snake
-        if len(body) > 1:
-            x_head, y_head = body[0]
-            x_next, y_next = body[1]
-            self.direction = (x_head - x_next, y_head - y_next)
-        else:
-            self.direction = random.choice(list(self.directions.values()))
 
         # Set the snake on the board
         for x, y in self.body:
@@ -72,6 +86,9 @@ class Snake:
         new_head = (head_x + dir_x, head_y + dir_y)
         x, y = new_head
         next_cell = board[x][y]
+
+        # TODO: new_head = x, y !
+
         if next_cell == WALL:
             return self.die("Snake hit the wall")
         elif next_cell == SNAKE_BODY:
@@ -90,7 +107,7 @@ class Snake:
         x, y = self.body[-1]
         board[x][y] = EMPTY
         self.body = [new_head] + self.body[:-1]
-        return False
+        return False, SMALLLER_NEGATIVE_REWARD
 
     def grow(self, board, new_head, x, y):
         # Green apple : grow the snake and add a new Green apple
@@ -99,7 +116,7 @@ class Snake:
         board[x][y] = SNAKE_BODY
         self.body = [new_head] + self.body
         board.new_apple(GREEN_APPLE)
-        return False
+        return False, POSITIVE_REWARD
 
     def shrink(self, board, new_head, x, y):
         board[x][y] = SNAKE_HEAD
@@ -114,11 +131,11 @@ class Snake:
         board[x][y] = EMPTY
         self.body = [new_head] + self.body[:-2]
         board.new_apple(RED_APPLE)
-        return False
+        return False, NEGATIVE_REWARD
 
     def die(self, message):
         print("Game over:", message)
-        return True
+        return True, BIGGER_NEGATIVE_REWARD
 
     def get_body_index(self, x, y):
 

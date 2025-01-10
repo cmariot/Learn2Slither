@@ -52,9 +52,6 @@ class Environment:
 
         self.game_number = 0
 
-        self.score = 0
-        self.scores = []
-
     def reset(self):
 
         # Reset the board with all cells set to 0 and walls around
@@ -84,9 +81,6 @@ class Environment:
 
         self.game_number += 1
 
-        self.scores.append(self.score)
-        self.score = 0
-
     def get_random_empty_cell(self):
         empty_cells = {
             (x, y)
@@ -113,11 +107,15 @@ class Environment:
                     return self.game_over("No more green apples, you win!")
 
     def move_snake(self, direction):
+        direction = ['up', 'down', 'left', 'right'][direction]
         if direction in self.snake.directions:
+            previous_direction = self.snake.direction
             self.snake.direction = self.snake.directions[direction]
-            is_game_over = self.snake.move(self)
+            is_game_over, reward = self.snake.move(self)
             if is_game_over:
+                self.snake.direction = previous_direction
                 self.game_over()
+        return reward, self.is_running()
 
     def get_state(self):
 
@@ -150,9 +148,9 @@ class Environment:
     def __str__(self):
 
         res = ""
-        for row in self.board:
-            for cell in row:
-                res += cell + " "
+        for x in range(self.width):
+            for y in range(self.height):
+                res += self.board[y][x] + " "
             res += "\n"
 
         state = self.get_state()

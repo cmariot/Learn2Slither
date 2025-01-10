@@ -18,6 +18,8 @@ class GraphicalUserInteface:
         self.load_snake_images()
         self.load_apple_images()
         pygame.display.set_caption("Learn2Slither")
+        pygame.font.init()
+        self.font = pygame.font.get_default_font()
 
     def load_snake_images(self):
 
@@ -79,7 +81,7 @@ class GraphicalUserInteface:
                 )
             )
 
-    def draw(self, environment: Environment):
+    def draw(self, environment: Environment, score: int, high_score: int):
         self.screen.fill((0, 0, 0))
         for y, row in enumerate(environment.board):
             for x, cell in enumerate(row):
@@ -229,6 +231,29 @@ class GraphicalUserInteface:
                             self.CELL_SIZE, self.CELL_SIZE
                         )
                     )
+
+        # Display the score on the screen
+        font = pygame.font.Font(self.font, 24)
+        score_text = font.render(
+            f"Score: {score}",
+            True,
+            (170, 215, 81)
+        )
+        self.screen.blit(score_text, (10, 10))
+
+        high_score_text = font.render(
+            f"High Score: {high_score}",
+            True,
+            (170, 215, 81)
+        )
+        # Display the high score on the screen on the top right corner
+        WINDOW_WIDTH = environment.width * self.CELL_SIZE
+        TEST_WIDTH = high_score_text.get_width()
+        x = WINDOW_WIDTH - TEST_WIDTH - 10
+        y = 10
+
+        self.screen.blit(high_score_text, (x, y))
+
         pygame.display.flip()
         self.clock.tick(self.FPS)
 
@@ -244,6 +269,7 @@ class GraphicalUserInteface:
                     self.close()
                 elif game_mode.is_human():
                     if key in ("up", "down", "left", "right"):
+                        key = ('up', 'down', 'left', 'right').index(key)
                         environment.move_snake(key)
         return True
 

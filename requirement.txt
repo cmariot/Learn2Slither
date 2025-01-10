@@ -22,3 +22,4 @@ torchaudio==2.5.1+cpu
 torchvision==0.20.1+cpu
 typing_extensions==4.9.0
 tzdata==2024.2
+matplotlib
