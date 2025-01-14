@@ -1,5 +1,5 @@
 from Environment import Environment
-from constants import RED_APPLE, GREEN_APPLE, SNAKE_HEAD, SNAKE_BODY, WALL, FPS
+from constants import RED_APPLE, GREEN_APPLE, SNAKE_HEAD, SNAKE_BODY, WALL
 import pygame
 from InterfaceController import InterfaceController
 
@@ -8,7 +8,7 @@ class GraphicalUserInteface:
 
     CELL_SIZE = 40
 
-    def __init__(self, board_width, board_height):
+    def __init__(self, board_width, board_height, fps):
         pygame.init()
         self.clock = pygame.time.Clock()
         self.window_width = board_width * self.CELL_SIZE
@@ -22,6 +22,7 @@ class GraphicalUserInteface:
         pygame.font.init()
         self.font = pygame.font.get_default_font()
         self.is_closed = False
+        self.fps = fps
 
     def load_snake_images(self):
 
@@ -87,7 +88,7 @@ class GraphicalUserInteface:
                 self,
                 environment: Environment,
                 controller: InterfaceController,
-                gui,
+                gui, cli,
                 score_evolution
             ):
 
@@ -96,7 +97,16 @@ class GraphicalUserInteface:
                 return self.close(environment)
             elif event.type == pygame.KEYDOWN:
                 key = pygame.key.name(event.key)
-                if key == 'space':
+
+                print(f"{key} pressed")
+
+                if (
+                    key in ('return', 'enter') and
+                    controller.is_ai() and
+                    controller.step_by_step
+                ):
+                    return True, None
+                elif key == 'space':
                     controller.toggle_ai()
                 elif key == 'c':
                     controller.toggle_cli()
@@ -106,10 +116,15 @@ class GraphicalUserInteface:
                     )
                 elif key == 'q' or key == 'escape':
                     return self.close(environment)
+                elif key in ('[+]', '[-]'):
+                    controller.change_fps(key, gui, cli)
                 elif controller.is_human():
                     if key in ("up", "down", "left", "right"):
                         key = ('up', 'down', 'left', 'right').index(key)
                         return True, key
+
+        if controller.step_by_step and controller.is_ai():
+            return False, None
         return controller.is_ai(), None
 
     def draw(self, environment, scores, controller: InterfaceController):
@@ -299,7 +314,7 @@ class GraphicalUserInteface:
         self.screen.blit(game_number_text, (x, y))
 
         pygame.display.flip()
-        self.clock.tick(FPS)
+        self.clock.tick(self.fps)
 
     def game_over(self, environment, controller: InterfaceController):
 
@@ -385,3 +400,7 @@ class GraphicalUserInteface:
         y += disabled_text.get_height()
         self.screen.blit(message_text, (x, y))
         pygame.display.flip()
+
+    def set_fps(self, fps):
+        self.fps = fps
+        self.clock.tick(self.fps)

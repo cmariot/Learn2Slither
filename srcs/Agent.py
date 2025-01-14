@@ -6,8 +6,8 @@ import os
 import pickle
 
 
-MAX_MEMORY = 1_000_000
-BATCH_SIZE = 10_000
+MAX_MEMORY = 10_000_000
+BATCH_SIZE = 1_000
 LEARNING_RATE = 0.001
 
 
@@ -23,6 +23,8 @@ class Agent:
 
         if not model_path:
             self.load_max_trained_model()
+        else:
+            self.load_model(model_path)
 
     def load_max_trained_model(self):
         # Load the most trained model if it exists
@@ -42,6 +44,15 @@ class Agent:
                         for attr in agent.__dict__:
                             setattr(self, attr, getattr(agent, attr))
                         print(f"Model loaded from {model_file}")
+
+    def load_model(self, model_path):
+        model_file = os.path.join(model_path, "model.pkl")
+        if os.path.exists(model_file):
+            with open(model_file, "rb") as f:
+                agent = pickle.load(f)
+                for attr in agent.__dict__:
+                    setattr(self, attr, getattr(agent, attr))
+                print(f"Model loaded from {model_file}")
 
     def choose_action(self, state, nb_games):
         # Exploration vs exploitation

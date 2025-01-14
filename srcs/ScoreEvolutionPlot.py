@@ -7,8 +7,9 @@ from constants import BIGGER_NEGATIVE_REWARD
 class ScoreEvolutionPlot:
 
     is_macos = os.name == "posix" and os.uname().sysname == "Darwin"
+    is_macos = True
 
-    def __init__(self, model_path=None):
+    def __init__(self, model_path=None, training_sessions=0):
 
         self.game_number = 0
         self.turn = 0
@@ -21,6 +22,12 @@ class ScoreEvolutionPlot:
         self.load_scores(model_path)
 
         self.high_score = int(max(self.scores, default=0))
+
+        # The number of training sessions that the agent will perform
+        if training_sessions > 0:
+            self.training_sessions = training_sessions + self.game_number
+        else:
+            self.training_sessions = 0
 
         if not self.is_macos:
 
@@ -75,7 +82,6 @@ class ScoreEvolutionPlot:
 
         self.figure.canvas.draw()
         self.figure.canvas.flush_events()
-        plt.pause(0.1)
 
     def save(self, directory):
         plot_filename = os.path.join(directory, "score_evolution.png")
@@ -127,6 +133,10 @@ class ScoreEvolutionPlot:
                     )
                     if os.path.exists(scores_filename):
                         self.load_scores_from_file(scores_filename)
+        else:
+            scores_filename = os.path.join(model_path, "score_evolution.csv")
+            if os.path.exists(scores_filename):
+                self.load_scores_from_file(scores_filename)
 
     def load_scores_from_file(self, filename):
         if not os.path.exists(filename):
@@ -138,3 +148,13 @@ class ScoreEvolutionPlot:
         self.scores = scores["Scores"].tolist()
         self.mean_scores = scores["Mean Scores"].tolist()
         self.game_number = int(self.iterations[-1])
+
+    def training_session_not_finished(self):
+        if self.training_sessions == 0:
+            return True
+
+        print(
+            f"Training session {self.game_number}/{self.training_sessions}",
+            f"{self.game_number < self.training_sessions}"
+        )
+        return self.game_number < self.training_sessions

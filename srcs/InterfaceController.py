@@ -2,11 +2,13 @@ class InterfaceController:
 
     def __init__(
                 self,
+                step_by_step: bool = False,
                 is_ai: bool = False,
                 cli_enabled: bool = True,
                 gui_enabled: bool = True
             ):
 
+        self.step_by_step = step_by_step
         self.ai_enabled = is_ai
         self.cli_enabled = cli_enabled
         self.gui_enabled = gui_enabled
@@ -47,3 +49,24 @@ class InterfaceController:
 
     def gui_disabled(self):
         return not self.gui_enabled
+
+    def change_fps(self, key, gui, cli):
+
+        # Increase or decrease the FPS of the game based on the key pressed
+        # Keys : '[+]' to increase the FPS and '[-]' to decrease the FPS
+
+        change = -10 if key == '[-]' else 10
+        if gui.fps <= 10 and change == -10:
+            change = -1
+        elif gui.fps <= 9 and change == 10:
+            change = 1
+
+        fps = gui.fps + change
+
+        if fps <= 0:
+            print("FPS must be greater than 0")
+            return
+
+        gui.set_fps(fps)
+        cli.set_fps(fps)
+        print(f"FPS: {gui.fps}")

@@ -5,6 +5,7 @@ from InterfaceController import InterfaceController
 from Interpreter import Interpreter
 from Agent import Agent
 from ScoreEvolutionPlot import ScoreEvolutionPlot
+from ArgumentParser import ArgumentParser
 
 
 TRAINING_LOOP = True
@@ -13,23 +14,38 @@ GAMING_LOOP = True
 
 def main():
 
+    # Parse the arguments
+    args = ArgumentParser().args
+
+    (
+        training_sessions,
+        fps,
+        step_by_step,
+        model_path
+    ) = (
+        args.training_sessions,
+        args.fps,
+        args.step_by_step,
+        args.model_path
+    )
+
     # Reinforcement learning variables
     environment = Environment()
     interpreter = Interpreter()
-    agent = Agent()
+    agent = Agent(model_path)
 
     # Interface variables
-    controller = InterfaceController()
-    gui = GraphicalUserInteface(environment.height, environment.width)
-    cli = CommandLineInterface()
-    score_evolution = ScoreEvolutionPlot()
+    controller = InterfaceController(step_by_step)
+    gui = GraphicalUserInteface(environment.height, environment.width, fps)
+    cli = CommandLineInterface(fps)
+    score_evolution = ScoreEvolutionPlot(model_path, training_sessions)
 
     # TODO:
-    # - [ ] Key to disable/enable the GUI
-    # - [ ] Command line arguments to load a model
-    # - [ ] Command line arguments to set the game mode, training options, etc.
 
+    # - [ ] Command line arguments to set the game mode, training options, etc.
     # - [ ] Training parameters (epsilon, gamma, etc.)
+    # - [ ] Train the model with the base state ?
+    # - [ ] A* algorithm to determine the min snake length ?
     # - [ ] Exploration vs exploitation
     # - [ ] Split the main function into smaller functions
     # - [ ] Add a logger
@@ -40,10 +56,18 @@ def main():
     # - [X] Key to disable/enable the CLI
     # - [X] CLI game over message
     # - [X] GUI game over view with a message
+    # - [X] Key to disable/enable the GUI
+    # - [X] Command line arguments to load a model
 
     cli.print(environment, score_evolution, controller, interpreter)
 
-    while TRAINING_LOOP and not gui.is_closed:
+    max_snake_len = 0
+
+    while (
+        TRAINING_LOOP and
+        not gui.is_closed and
+        score_evolution.training_session_not_finished()
+    ):
 
         # Reset the environment (snake, food, score, etc.) at the beginning of
         # each game
@@ -55,7 +79,7 @@ def main():
 
             # Handle the key pressed by the user
             should_perform_move, action = gui.handle_key_pressed(
-                environment, controller, gui, score_evolution    
+                environment, controller, gui, cli, score_evolution
             )
             if environment.is_closed:
                 break
@@ -104,6 +128,10 @@ def main():
                 reward
             )
 
+            if len(environment.snake.body) > max_snake_len:
+                max_snake_len = len(environment.snake.body)
+            print(f"Max snake length: {max_snake_len}")
+
             if environment.is_game_over:
 
                 gui.game_over(environment, controller)
@@ -123,7 +151,7 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    # except Exception as e:
-        # print(e)
+    except Exception as e:
+        print(e)
     except KeyboardInterrupt:
         print("\nExiting...")

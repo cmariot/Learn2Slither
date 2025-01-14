@@ -1,14 +1,15 @@
 import pyfiglet
-from constants import BLUE, RESET, FPS
+from constants import BLUE, RESET
 import time
 
 
 class CommandLineInterface:
 
-    def __init__(self):
+    def __init__(self, fps):
         self.welcome_message()
         self.state_str = ""
         self.new_state_str = ""
+        self.fps = fps
 
     def print(
                 self,
@@ -33,7 +34,7 @@ class CommandLineInterface:
         if environment.is_game_over:
             self.game_over(environment.game_over_message)
         if controller.gui_disabled():
-            time.sleep(1 / FPS)
+            time.sleep(1 / self.fps)
 
     def save_state(
                 self,
@@ -134,3 +135,6 @@ class CommandLineInterface:
 
     def game_over(self, game_over_message):
         print(f"{BLUE}Game over:{RESET} {game_over_message}\n")
+
+    def set_fps(self, fps):
+        self.fps = fps
