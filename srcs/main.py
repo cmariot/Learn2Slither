@@ -1,156 +1,129 @@
 from Environment import Environment
 from GraphicalUserInterface import GraphicalUserInteface
-from game_mode import GameMode
+from CommandLineInterface import CommandLineInterface
+from InterfaceController import InterfaceController
 from Interpreter import Interpreter
 from Agent import Agent
-import pyfiglet
-import matplotlib.pyplot as plt
-from constants import BLUE, RESET
-from Snake import POSITIVE_REWARD
-import numpy as np
+from ScoreEvolutionPlot import ScoreEvolutionPlot
 
 
-def header(game_mode):
-    print(pyfiglet.figlet_format("Learn2Slither"))
-    print("Welcome to Learn2Slither!")
-    print("Move the snake with the arrow keys")
-    print("Press 'space' to switch between human and auto mode")
-    print("Press 'q' or 'escape' to exit\n")
-    print(f"Gaming in {game_mode} mode\n")
+TRAINING_LOOP = True
+GAMING_LOOP = True
 
 
 def main():
 
+    # Reinforcement learning variables
     environment = Environment()
     interpreter = Interpreter()
     agent = Agent()
-    game_mode = GameMode("human")
-    gui = GraphicalUserInteface(environment)
 
-    header(game_mode)
+    # Interface variables
+    controller = InterfaceController()
+    gui = GraphicalUserInteface(environment.height, environment.width)
+    cli = CommandLineInterface()
+    score_evolution = ScoreEvolutionPlot()
 
-    training = True
+    # TODO:
+    # - [ ] Key to disable/enable the GUI
+    # - [ ] Command line arguments to load a model
+    # - [ ] Command line arguments to set the game mode, training options, etc.
 
-    plt.ion()
-    figure, ax = plt.subplots()
+    # - [ ] Training parameters (epsilon, gamma, etc.)
+    # - [ ] Exploration vs exploitation
+    # - [ ] Split the main function into smaller functions
+    # - [ ] Add a logger
 
-    scores = []
-    iterations = []
-    mean_scores = []
+    # - [X] Wall distance in the state
+    # - [X] Save the model / agent
+    # - [X] Fix score/game_number mismatch between the CLI and the GUI
+    # - [X] Key to disable/enable the CLI
+    # - [X] CLI game over message
+    # - [X] GUI game over view with a message
 
-    score_plot, = ax.plot(scores, iterations)
-    mean_score_plot, = ax.plot(mean_scores, iterations)
+    cli.print(environment, score_evolution, controller, interpreter)
 
-    # Legend, titles and labels
-    ax.legend(["Score", "Mean Score"])
-    ax.set_title("Learn2Slither score evolution")
-    ax.set_xlabel("Iterations")
-    ax.set_ylabel("Score")
+    while TRAINING_LOOP and not gui.is_closed:
 
-    while training:
-
+        # Reset the environment (snake, food, score, etc.) at the beginning of
+        # each game
         environment.reset()
-        agent.current_max_score = 0
-        while environment.is_running():
 
-            gui.handle_key_pressed(environment, game_mode)
+        gui.draw(environment, score_evolution, controller)
 
-            if game_mode.is_ai():
+        while GAMING_LOOP and not environment.is_game_over:
 
-                print("/" * 50)
-                print(f"Game number: {environment.game_number}\n")
+            # Handle the key pressed by the user
+            should_perform_move, action = gui.handle_key_pressed(
+                environment, controller, gui, score_evolution    
+            )
+            if environment.is_closed:
+                break
+            elif not should_perform_move:
+                continue
 
-                print(environment)
+            # If the game mode is AI or if the user pressed a key in human mode
+            # perform the move
 
-                # Get the state from the environment
-                state = interpreter.interpret(environment)
+            # Get the current state
+            state, pandas_state = interpreter.interpret(environment)
 
-                # Choose an action based on the state
-                action = agent.choose_action(state)
-                print(f"\nAction: {action}\n")
+            cli.save_state(environment, pandas_state, controller)
 
-                # Perform move and get the new state
-                reward, is_alive = environment.move_snake(action)
+            if controller.is_ai():
 
-                if reward == POSITIVE_REWARD:
-                    pass
-                if reward == -10:
-                    print(f"\nReward: {reward}")
-                else:
-                    print(f"Reward: {reward}")
+                # The agent choose an action based on the state
+                action = agent.choose_action(
+                    state, score_evolution.game_number
+                )
 
-                new_state = interpreter.interpret(environment)
+            # Perform move and get the reward
+            reward, is_alive = environment.move_snake(action)
 
-                # Avoid infinite loops
-                print(f"{BLUE}Agent score: ", agent.score, RESET)
+            # Get the new state
+            new_state, new_pandas_state = interpreter.interpret(environment)
 
-                # End the game if the snake is too bad (infinite loops)
-                if agent.score < agent.current_max_score * 1.1 - 100:
-                    environment.snake.die("Snake is too bad")
-                    environment.game_over()
-                    is_alive = False
-                    reward = agent.score
+            cli.save_state(environment, new_pandas_state, controller, True)
 
-                # # End the game if the snake is too good (save good snakes)
+            # Train short memory
+            agent.train_short_memory(
+                state, action, reward, new_state, is_alive
+            )
 
-                elif agent.score > agent.current_max_score * 1.1 + 100:
-                    environment.snake.die("Snake is too good")
-                    environment.game_over()
-                    is_alive = False
-                    reward = agent.score
+            # Remember
+            agent.learn(
+                state, action, reward, new_state, is_alive, score_evolution
+            )
 
-                # Train short memory
-                agent.train_short_memory(state, action, reward, new_state, is_alive)
+            cli.print(
+                environment,
+                score_evolution,
+                controller,
+                interpreter,
+                action,
+                reward
+            )
 
-                # Remember
-                agent.learn(state, action, reward, new_state, is_alive)
+            if environment.is_game_over:
 
-                # Update the best snake score reached
-                if agent.score > agent.current_max_score:
-                    agent.current_max_score = agent.score
+                gui.game_over(environment, controller)
 
-                # Update the high score
-                if agent.score > agent.high_score:
-                    agent.high_score = agent.score
+                # Train long memory
+                agent.train_long_memory()
 
-                if not is_alive:
+                # Update the score plot
+                score_evolution.update()
 
-                    # Train long memory
-                    agent.train_long_memory()
+            gui.draw(environment, score_evolution, controller)
 
-                    # Update the score
-                    print(f"Score: {agent.score}")
-                    # scores.append(agent.score)
-
-                    scores.append(agent.score)
-                    mean_scores.append(np.mean(scores))
-                    iterations.append(environment.game_number)
-
-                    agent.score = 0
-                    score_plot.set_xdata(iterations)
-                    score_plot.set_ydata(scores)
-
-                    mean_score_plot.set_xdata(iterations)
-                    mean_score_plot.set_ydata(mean_scores)
-
-                    ax.relim()
-                    ax.autoscale_view()
-
-                    figure.canvas.draw()
-                    figure.canvas.flush_events()
-                    plt.pause(0.1)
-
-                print("/" * 50, "\n\n")
-
-            gui.draw(environment, agent.score, agent.high_score)
-
-    plt.ioff()
+    # Save the agent and the score evolution
+    agent.save(agent, score_evolution)
 
 
 if __name__ == "__main__":
     try:
         main()
-    except Exception as e:
-        print(e)
+    # except Exception as e:
+        # print(e)
     except KeyboardInterrupt:
         print("\nExiting...")

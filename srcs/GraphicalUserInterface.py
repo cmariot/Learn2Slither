@@ -1,25 +1,27 @@
 from Environment import Environment
-from game_mode import GameMode
-from constants import RED_APPLE, GREEN_APPLE, SNAKE_HEAD, SNAKE_BODY, WALL
+from constants import RED_APPLE, GREEN_APPLE, SNAKE_HEAD, SNAKE_BODY, WALL, FPS
 import pygame
+from InterfaceController import InterfaceController
 
 
 class GraphicalUserInteface:
 
-    FPS = 20
     CELL_SIZE = 40
 
-    def __init__(self, environment: Environment):
+    def __init__(self, board_width, board_height):
         pygame.init()
         self.clock = pygame.time.Clock()
-        window_width = environment.width * self.CELL_SIZE
-        window_height = environment.height * self.CELL_SIZE
-        self.screen = pygame.display.set_mode((window_width, window_height))
+        self.window_width = board_width * self.CELL_SIZE
+        self.window_height = board_height * self.CELL_SIZE
+        self.screen = pygame.display.set_mode(
+            (self.window_width, self.window_height)
+        )
         self.load_snake_images()
         self.load_apple_images()
         pygame.display.set_caption("Learn2Slither")
         pygame.font.init()
         self.font = pygame.font.get_default_font()
+        self.is_closed = False
 
     def load_snake_images(self):
 
@@ -81,7 +83,40 @@ class GraphicalUserInteface:
                 )
             )
 
-    def draw(self, environment: Environment, score: int, high_score: int):
+    def handle_key_pressed(
+                self,
+                environment: Environment,
+                controller: InterfaceController,
+                gui,
+                score_evolution
+            ):
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return self.close(environment)
+            elif event.type == pygame.KEYDOWN:
+                key = pygame.key.name(event.key)
+                if key == 'space':
+                    controller.toggle_ai()
+                elif key == 'c':
+                    controller.toggle_cli()
+                elif key == 'g':
+                    controller.toggle_gui(
+                        gui, environment, score_evolution
+                    )
+                elif key == 'q' or key == 'escape':
+                    return self.close(environment)
+                elif controller.is_human():
+                    if key in ("up", "down", "left", "right"):
+                        key = ('up', 'down', 'left', 'right').index(key)
+                        return True, key
+        return controller.is_ai(), None
+
+    def draw(self, environment, scores, controller: InterfaceController):
+
+        if controller.gui_disabled():
+            return
+
         self.screen.fill((0, 0, 0))
         for y, row in enumerate(environment.board):
             for x, cell in enumerate(row):
@@ -235,44 +270,118 @@ class GraphicalUserInteface:
         # Display the score on the screen
         font = pygame.font.Font(self.font, 24)
         score_text = font.render(
-            f"Score: {score}",
+            f"Score: {scores.score}",
             True,
             (170, 215, 81)
         )
         self.screen.blit(score_text, (10, 10))
 
+        # Display the high score on the screen
         high_score_text = font.render(
-            f"High Score: {high_score}",
+            f"High Score: {scores.high_score}",
             True,
             (170, 215, 81)
         )
-        # Display the high score on the screen on the top right corner
         WINDOW_WIDTH = environment.width * self.CELL_SIZE
         TEST_WIDTH = high_score_text.get_width()
         x = WINDOW_WIDTH - TEST_WIDTH - 10
         y = 10
-
         self.screen.blit(high_score_text, (x, y))
 
+        # Display the game_number on the screen (center bottom)
+        game_number_text = font.render(
+            f"Game Number: {scores.game_number}",
+            True,
+            (170, 215, 81)
+        )
+        x = (WINDOW_WIDTH - game_number_text.get_width()) / 2
+        y = WINDOW_WIDTH - game_number_text.get_height() - 10
+        self.screen.blit(game_number_text, (x, y))
+
         pygame.display.flip()
-        self.clock.tick(self.FPS)
+        self.clock.tick(FPS)
 
-    def handle_key_pressed(self, environment: Environment, game_mode: GameMode):
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                self.close()
-            elif event.type == pygame.KEYDOWN:
-                key = pygame.key.name(event.key)
-                if key == 'space':
-                    game_mode.switch()
-                elif key == 'q' or key == 'escape':
-                    self.close()
-                elif game_mode.is_human():
-                    if key in ("up", "down", "left", "right"):
-                        key = ('up', 'down', 'left', 'right').index(key)
-                        environment.move_snake(key)
-        return True
+    def game_over(self, environment, controller: InterfaceController):
 
-    def close(self):
+        if controller.gui_disabled():
+            return
+
+        # Display a transparent rectangle on the screen
+        transparent = pygame.Surface(
+            ((environment.width - 2) * self.CELL_SIZE,
+             (environment.height - 2) * self.CELL_SIZE)
+        )
+        transparent.set_alpha(128)
+        transparent.fill((170, 215, 81))
+        self.screen.blit(transparent, (self.CELL_SIZE, self.CELL_SIZE))
+
+        font = pygame.font.Font(self.font, 36)
+        game_over_text = font.render(
+            "Game Over",
+            True,
+            (87, 138, 52)
+        )
+        font = pygame.font.Font(self.font, 24)
+        game_over_message_text = font.render(
+            environment.game_over_message,
+            True,
+            (87, 138, 52)
+        )
+
+        # Combine the game over text and the game over message text
+        # to center them on the screen
+        x = (self.screen.get_width() - game_over_text.get_width()) / 2
+        y = (self.screen.get_height() - (
+            game_over_text.get_height() + game_over_message_text.get_height()
+        )) / 2
+        self.screen.blit(game_over_text, (x, y))
+        x = (self.screen.get_width() - game_over_message_text.get_width()) / 2
+        y += game_over_text.get_height()
+        self.screen.blit(game_over_message_text, (x, y))
+        pygame.display.flip()
+        pygame.time.wait(500)
+
+    def close(self, environment: Environment):
         pygame.quit()
-        exit()
+        environment.is_closed = True
+        self.is_closed = True
+        return False, None
+
+    def disable(self):
+
+        rectangle = pygame.Surface(
+            (self.window_width, self.window_height)
+        )
+        rectangle.fill((87, 138, 52))
+        self.screen.blit(rectangle, (0, 0))
+
+        transparent = pygame.Surface(
+            ((self.window_width / self.CELL_SIZE - 2) * self.CELL_SIZE,
+             (self.window_height / self.CELL_SIZE - 2) * self.CELL_SIZE)
+        )
+        transparent.fill((170, 215, 81))
+        self.screen.blit(transparent, (self.CELL_SIZE, self.CELL_SIZE))
+
+        font = pygame.font.Font(self.font, 36)
+        disabled_text = font.render(
+            "GUI Disabled",
+            True,
+            (87, 138, 52)
+        )
+
+        font = pygame.font.Font(self.font, 24)
+        message_text = font.render(
+            "Press 'g' to enable the GUI",
+            True,
+            (87, 138, 52)
+        )
+
+        x = (self.screen.get_width() - disabled_text.get_width()) / 2
+        y = (self.screen.get_height() - (
+            disabled_text.get_height() + message_text.get_height()
+        )) / 2
+        self.screen.blit(disabled_text, (x, y))
+        x = (self.screen.get_width() - message_text.get_width()) / 2
+        y += disabled_text.get_height()
+        self.screen.blit(message_text, (x, y))
+        pygame.display.flip()

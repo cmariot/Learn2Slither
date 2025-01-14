@@ -13,8 +13,6 @@ class Environment:
 
     def __init__(self):
 
-        self.nb_games = 0
-
         # Create the board with all cells set to 0 and walls around
         self.board = [
             [WALL if (
@@ -49,8 +47,9 @@ class Environment:
         self.current_red_apples = self.nb_red_apples
 
         self.is_game_over = False
+        self.is_closed = False
 
-        self.game_number = 0
+        self.game_over_message = ""
 
     def reset(self):
 
@@ -79,7 +78,7 @@ class Environment:
 
         self.is_game_over = False
 
-        self.game_number += 1
+        self.game_over_message = ""
 
     def get_random_empty_cell(self):
         empty_cells = {
@@ -111,18 +110,15 @@ class Environment:
         if direction in self.snake.directions:
             previous_direction = self.snake.direction
             self.snake.direction = self.snake.directions[direction]
-            is_game_over, reward = self.snake.move(self)
+            is_game_over, reward, snake_message = self.snake.move(self)
             if is_game_over:
                 self.snake.direction = previous_direction
-                self.game_over()
-        return reward, self.is_running()
+                self.game_over(snake_message)
+        return reward, not self.is_game_over
 
     def get_state(self):
-
-        # Get the snake head position
+        # Snake can see only in front, back, left and right of its head
         x_head, y_head = self.snake.body[0]
-
-        # Create a 2d array with column and row, fill with spaces otherwise
         state = [
             [
                 self[x][y] if x == x_head or y == y_head else ' '
@@ -130,34 +126,11 @@ class Environment:
             ]
             for y in range(self.height)
         ]
-
         return state
 
-    def game_over(self, message=""):
-        if message:
-            print("GAME OVER:", message, "\n")
+    def game_over(self, game_over_message):
         self.is_game_over = True
-        return True
-
-    def is_running(self):
-        return not self.is_game_over
+        self.game_over_message = game_over_message
 
     def __getitem__(self, key):
         return self.board[key]
-
-    def __str__(self):
-
-        res = ""
-        for x in range(self.width):
-            for y in range(self.height):
-                res += self.board[y][x] + " "
-            res += "\n"
-
-        state = self.get_state()
-        res += "\n"
-        for row in state:
-            for cell in row:
-                res += cell + " "
-            res += "\n"
-
-        return res
