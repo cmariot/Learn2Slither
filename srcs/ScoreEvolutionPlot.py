@@ -9,17 +9,29 @@ class ScoreEvolutionPlot:
     is_macos = os.name == "posix" and os.uname().sysname == "Darwin"
     is_macos = True
 
-    def __init__(self, model_path=None, training_sessions=0):
+    def __init__(
+                self,
+                model_path=None,
+                training_sessions=0,
+                new_model=False,
+                dont_save=False
+            ):
 
         self.game_number = 0
         self.turn = 0
         self.score = 0
+        self.snake_len = 0
 
         self.scores = []
         self.iterations = []
         self.mean_scores = []
+        self.max_snake_lengths = []
+        self.nb_turns = []
 
-        self.load_scores(model_path)
+        if new_model is False:
+            self.load_scores(model_path)
+
+        self.dont_save = dont_save
 
         self.high_score = int(max(self.scores, default=0))
 
@@ -52,20 +64,31 @@ class ScoreEvolutionPlot:
         if not self.is_macos:
             plt.ioff()
 
+    def update_score(self, reward, snake_len):
+        # score_evolution.score += reward
+        # if score_evolution.score > score_evolution.high_score:
+        #     score_evolution.high_score = score_evolution.score
+        # score_evolution.turn += 1
+        self.score += reward
+        if self.score > self.high_score:
+            self.high_score = self.score
+        self.turn += 1
+        if snake_len > self.snake_len:
+            self.snake_len = snake_len
+
     def update(self):
 
-        self.game_number += 1
-        self.turn = 0
-
-        self.score -= BIGGER_NEGATIVE_REWARD
-
-        self.scores.append(self.score)
+        self.scores.append(self.score - BIGGER_NEGATIVE_REWARD)
         self.mean_scores.append(int(sum(self.scores) / len(self.scores)))
         self.iterations.append(self.game_number)
+        self.max_snake_lengths.append(self.snake_len)
+        self.nb_turns.append(self.turn)
 
         if self.score > self.high_score:
             self.high_score = self.score
 
+        self.game_number += 1
+        self.turn = 0
         self.score = 0
 
         if self.is_macos:
@@ -84,6 +107,10 @@ class ScoreEvolutionPlot:
         self.figure.canvas.flush_events()
 
     def save(self, directory):
+
+        if self.dont_save:
+            return
+
         plot_filename = os.path.join(directory, "score_evolution.png")
         scores_filename = os.path.join(directory, "score_evolution.csv")
         self.save_plot(plot_filename)
@@ -108,9 +135,14 @@ class ScoreEvolutionPlot:
             [
                 self.iterations,
                 self.scores,
-                self.mean_scores
+                self.mean_scores,
+                self.max_snake_lengths,
+                self.nb_turns
             ],
-            index=["Iterations", "Scores", "Mean Scores"]
+            index=[
+                "Iterations", "Scores", "Mean Scores",
+                "Max Snake Lengths", "Nb Turns"
+            ]
         ).T
         scores.to_csv(filename, sep="\t", index=False)
         print(f"Score values saved as {filename}")
@@ -147,14 +179,12 @@ class ScoreEvolutionPlot:
         self.iterations = scores["Iterations"].tolist()
         self.scores = scores["Scores"].tolist()
         self.mean_scores = scores["Mean Scores"].tolist()
-        self.game_number = int(self.iterations[-1])
+        if self.iterations:
+            self.game_number = int(self.iterations[-1])
+        else:
+            self.game_number = 0
 
     def training_session_not_finished(self):
         if self.training_sessions == 0:
             return True
-
-        print(
-            f"Training session {self.game_number}/{self.training_sessions}",
-            f"{self.game_number < self.training_sessions}"
-        )
         return self.game_number < self.training_sessions

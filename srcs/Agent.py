@@ -7,24 +7,27 @@ import pickle
 
 
 MAX_MEMORY = 10_000_000
-BATCH_SIZE = 1_000
+BATCH_SIZE = 100_000
 LEARNING_RATE = 0.001
 
 
 class Agent:
 
-    def __init__(self, model_path=None):
+    def __init__(self, model_path=None, new_model=False, dont_save=False):
         self.epsilon = 0.01
         self.gamma = 0.9
         self.lr = LEARNING_RATE
         self.memory = deque(maxlen=MAX_MEMORY)
-        self.model = Linear_QNet(16, 256, 4)
+        self.model = Linear_QNet()
         self.trainer = QTrainer(self.model, self.lr, self.gamma)
+        self.model_path = model_path
+        self.dont_save = dont_save
 
-        if not model_path:
-            self.load_max_trained_model()
-        else:
-            self.load_model(model_path)
+        if new_model is False:
+            if model_path:
+                self.load_model(model_path)
+            else:
+                self.load_max_trained_model()
 
     def load_max_trained_model(self):
         # Load the most trained model if it exists
@@ -63,6 +66,7 @@ class Agent:
 
         # The epsilon decreases as the number of games increases
         # self.epsilon = 0.01 + 0.2 * (1 - min(nb_games, 1000) / 1000)
+
         self.epsilon = 0.01
 
         # print(f"epsilon: {self.epsilon}")
@@ -81,29 +85,22 @@ class Agent:
             state0 = torch.tensor(state, dtype=torch.float)
             prediction = self.model(state0)
             action = torch.argmax(prediction).item()
-
         return action
 
     def learn(
-            self,
-            state,
-            action,
-            reward,
-            next_state,
-            snake_alive,
-            score_evolution
+                self,
+                state,
+                action,
+                reward,
+                next_state,
+                snake_alive,
             ):
 
         self.memory.append((state, action, reward, next_state, snake_alive))
         if len(self.memory) > MAX_MEMORY:
             self.memory.popleft()
 
-        # Update the score evolution
-        score_evolution.score += reward
-        score_evolution.turn += 1
-
     def train_long_memory(self):
-
         if len(self.memory) > BATCH_SIZE:
             mini_sample = random.sample(self.memory, BATCH_SIZE)
         else:
@@ -118,6 +115,9 @@ class Agent:
         self.trainer.train_step(state, action, reward, next_state, snake_alive)
 
     def save(self, agent, score_evolution):
+
+        if self.dont_save:
+            return
 
         model_path = os.path.join(os.getcwd(), "models")
         if not os.path.exists(model_path):

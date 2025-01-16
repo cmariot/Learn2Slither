@@ -53,8 +53,29 @@ class ArgumentParser:
             help="Path of the model directory."
         )
 
+        # Boolean disable model and score saving
+        self.parser.add_argument(
+            "--dont-save",
+            action="store_true",
+            help="Do not save the model."
+        )
+
+        # Boolean to train a model from scratch
+        self.parser.add_argument(
+            "--new-model",
+            action="store_true",
+            help="Train a model from scratch."
+        )
+
         # Parse the arguments
         self.args = self.parse_args()
+
+        # Incompatible arguments :
+        # - --model-path and --new-model
+        if self.args.model_path is not None and self.args.new_model:
+            self.parser.error(
+                "--model-path and --new-model are incompatible arguments."
+            )
 
     def parse_args(self):
         return self.parser.parse_args()

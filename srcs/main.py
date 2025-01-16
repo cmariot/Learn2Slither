@@ -21,47 +21,40 @@ def main():
         training_sessions,
         fps,
         step_by_step,
-        model_path
+        model_path,
+        dont_save,
+        new_model
     ) = (
         args.training_sessions,
         args.fps,
         args.step_by_step,
-        args.model_path
+        args.model_path,
+        args.dont_save,
+        args.new_model
     )
 
     # Reinforcement learning variables
     environment = Environment()
     interpreter = Interpreter()
-    agent = Agent(model_path)
+    agent = Agent(model_path, new_model, dont_save)
 
     # Interface variables
     controller = InterfaceController(step_by_step)
     gui = GraphicalUserInteface(environment.height, environment.width, fps)
     cli = CommandLineInterface(fps)
-    score_evolution = ScoreEvolutionPlot(model_path, training_sessions)
+    score_evolution = ScoreEvolutionPlot(
+        model_path, training_sessions, new_model, dont_save
+    )
 
     # TODO:
-
-    # - [ ] Command line arguments to set the game mode, training options, etc.
-    # - [ ] Training parameters (epsilon, gamma, etc.)
+    # - [ ] Load a non-existant model error
+    # - [ ] Dont train argument
+    # - [ ] Key to save the model / scores
     # - [ ] Train the model with the base state ?
     # - [ ] A* algorithm to determine the min snake length ?
-    # - [ ] Exploration vs exploitation
-    # - [ ] Split the main function into smaller functions
-    # - [ ] Add a logger
-
-    # - [X] Wall distance in the state
-    # - [X] Save the model / agent
-    # - [X] Fix score/game_number mismatch between the CLI and the GUI
-    # - [X] Key to disable/enable the CLI
-    # - [X] CLI game over message
-    # - [X] GUI game over view with a message
-    # - [X] Key to disable/enable the GUI
-    # - [X] Command line arguments to load a model
+    # - [X] Key to enable/disable the step by step mode
 
     cli.print(environment, score_evolution, controller, interpreter)
-
-    max_snake_len = 0
 
     while (
         TRAINING_LOOP and
@@ -78,6 +71,18 @@ def main():
         while GAMING_LOOP and not environment.is_game_over:
 
             # Handle the key pressed by the user
+
+            # Key mapping:
+            # - Use 'space' to switch between AI and Human mode
+            # - Use 'c' to enable/disable the CLI
+            # - Use 'g' to enable/disable the GUI
+            # - Use 's' to enable/disable the step by step mode
+            #   (only in AI mode)
+            # - Use 'q', 'esc' or use the close button to quit the game
+            # - '+' and '-' to increase or decrease the FPS (+/- 10 fps)
+            # - In AI Mode, if the step by step mode is enabled, press 'enter'
+            #   to perform the next move
+
             should_perform_move, action = gui.handle_key_pressed(
                 environment, controller, gui, cli, score_evolution
             )
@@ -104,20 +109,19 @@ def main():
             # Perform move and get the reward
             reward, is_alive = environment.move_snake(action)
 
+            # Update the score evolution
+            score_evolution.update_score(reward, len(environment.snake.body))
+
             # Get the new state
             new_state, new_pandas_state = interpreter.interpret(environment)
 
             cli.save_state(environment, new_pandas_state, controller, True)
 
             # Train short memory
-            agent.train_short_memory(
-                state, action, reward, new_state, is_alive
-            )
+            agent.train_short_memory(state, action, reward, new_state, is_alive)
 
             # Remember
-            agent.learn(
-                state, action, reward, new_state, is_alive, score_evolution
-            )
+            agent.learn(state, action, reward, new_state, is_alive)
 
             cli.print(
                 environment,
@@ -127,10 +131,6 @@ def main():
                 action,
                 reward
             )
-
-            if len(environment.snake.body) > max_snake_len:
-                max_snake_len = len(environment.snake.body)
-            print(f"Max snake length: {max_snake_len}")
 
             if environment.is_game_over:
 

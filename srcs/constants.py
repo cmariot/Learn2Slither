@@ -12,6 +12,7 @@ SNAKE_HEAD = BLUE + 'H' + RESET
 SNAKE_BODY = BLUE + 'S' + RESET
 EMPTY = '0'
 WALL = GRAY + 'W' + RESET
+DEAD_SNAKE = GRAY + 'X' + RESET
 
 # Constants for the rewards
 NEGATIVE_REWARD = -50  # Manger une pomme rouge

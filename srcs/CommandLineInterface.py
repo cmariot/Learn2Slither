@@ -55,8 +55,8 @@ class CommandLineInterface:
 
     def get_state_str(self, environment, pandas_state, controller):
 
-        if controller.cli_disabled():
-            return ""
+        # if controller.cli_disabled():
+        #     return ""
 
         res = []
         state = environment.get_state()
@@ -76,18 +76,33 @@ class CommandLineInterface:
             res[-1] += state_line + '\t'
 
         # Append the pandas dataframe at the end of each line
-        max_line_len = 0
+        max_value_len = 0
+        lengths = []
         for i, (column_name, value) in enumerate(pandas_state.items()):
+            column_name: str = column_name
+            if (
+                column_name.startswith("horizontal") or
+                column_name.startswith("vertical")
+            ):
+                int_values = ('G', '0', 'R', 'W', 'S', 'H', 'X')
+                value = f"{column_name}: {int_values[value.iloc[0]]}"
+            else:
+                value = f"{column_name}: {value.iloc[0]}"
+
             if i < len(res):
-                if len(res[i]) > max_line_len:
-                    max_line_len = len(res[i])
-                res[i] += f"{column_name}: {value.iloc[0]}"
+                lengths.append(len(value))
+                if len(value) > max_value_len:
+                    max_value_len = len(value)
+                res[i] += value
             else:
                 idx = i % len(res)
-                if len(res[idx]) < max_line_len:
-                    spacer = "_" * (len(res[idx]) - max_line_len)
-                    res[idx] += spacer
-                res[idx] += "\t" + f"{column_name}: {value.iloc[0]}"
+                lengths[idx] = len(value)
+                res[idx] += value
+
+            # Add spaces to align the values
+            if i % len(res) == len(res) - 1:
+                for j in range(len(res)):
+                    res[j] += " " * (max_value_len - lengths[j] + 1) + '\t'
 
         return "\n".join(res)
 

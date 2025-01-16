@@ -98,7 +98,7 @@ class GraphicalUserInteface:
             elif event.type == pygame.KEYDOWN:
                 key = pygame.key.name(event.key)
 
-                print(f"{key} pressed")
+                # print(f"{key} pressed")
 
                 if (
                     key in ('return', 'enter') and
@@ -114,9 +114,16 @@ class GraphicalUserInteface:
                     controller.toggle_gui(
                         gui, environment, score_evolution
                     )
+                elif key == 's':
+                    controller.toggle_step_by_step()
                 elif key == 'q' or key == 'escape':
                     return self.close(environment)
-                elif key in ('[+]', '[-]'):
+                elif key in ('[+]', '[-]', '-', '='):
+                    shift_pressed = pygame.key.get_mods() & pygame.KMOD_SHIFT
+                    if key == '=' and shift_pressed:
+                        key = '[+]'
+                    elif key == '-':
+                        key = '[-]'
                     controller.change_fps(key, gui, cli)
                 elif controller.is_human():
                     if key in ("up", "down", "left", "right"):
@@ -293,7 +300,7 @@ class GraphicalUserInteface:
 
         # Display the high score on the screen
         high_score_text = font.render(
-            f"High Score: {scores.high_score}",
+            f"Record: {scores.high_score}",
             True,
             (170, 215, 81)
         )

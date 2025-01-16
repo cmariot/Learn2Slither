@@ -55,6 +55,9 @@ class InterfaceController:
         # Increase or decrease the FPS of the game based on the key pressed
         # Keys : '[+]' to increase the FPS and '[-]' to decrease the FPS
 
+        if key not in ['[+]', '[-]']:
+            return
+
         change = -10 if key == '[-]' else 10
         if gui.fps <= 10 and change == -10:
             change = -1
@@ -70,3 +73,10 @@ class InterfaceController:
         gui.set_fps(fps)
         cli.set_fps(fps)
         print(f"FPS: {gui.fps}")
+
+    def toggle_step_by_step(self):
+        self.step_by_step = not self.step_by_step
+        if self.step_by_step:
+            print("Step by step mode enabled")
+        else:
+            print("Step by step mode disabled")
