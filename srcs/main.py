@@ -17,42 +17,34 @@ def main():
     # Parse the arguments
     args = ArgumentParser().args
 
-    (
-        training_sessions,
-        fps,
-        step_by_step,
-        model_path,
-        dont_save,
-        new_model
-    ) = (
-        args.training_sessions,
-        args.fps,
-        args.step_by_step,
-        args.model_path,
-        args.dont_save,
-        args.new_model
-    )
+    # training_sessions = args.training_sessions
+    # fps = args.fps
+    # step_by_step = args.step_by_step
+    # model_path = args.model_path
+    # dont_save = args.dont_save
+    # new_model = args.new_model
+    # is_training = args.train
+    # display_plot = args.plot
 
     # Reinforcement learning variables
     environment = Environment()
     interpreter = Interpreter()
-    agent = Agent(model_path, new_model, dont_save)
+    agent = Agent(args)
 
     # Interface variables
-    controller = InterfaceController(step_by_step)
-    gui = GraphicalUserInteface(environment.height, environment.width, fps)
-    cli = CommandLineInterface(fps)
-    score_evolution = ScoreEvolutionPlot(
-        model_path, training_sessions, new_model, dont_save
-    )
+    controller = InterfaceController(args)
+    gui = GraphicalUserInteface(environment.height, environment.width, args)
+    cli = CommandLineInterface(args)
+    score_evolution = ScoreEvolutionPlot(args)
 
     # TODO:
-    # - [ ] Load a non-existant model error
-    # - [ ] Dont train argument
-    # - [ ] Key to save the model / scores
     # - [ ] Train the model with the base state ?
     # - [ ] A* algorithm to determine the min snake length ?
     # - [X] Key to enable/disable the step by step mode
+    # - [X] Load a non-existant model error
+    # - [X] Dont train argument
+    # - [X] Game number decrease when the model is saved
+    # - [X] Key to save the model / scores
 
     cli.print(environment, score_evolution, controller, interpreter)
 
@@ -84,7 +76,7 @@ def main():
             #   to perform the next move
 
             should_perform_move, action = gui.handle_key_pressed(
-                environment, controller, gui, cli, score_evolution
+                environment, controller, gui, cli, score_evolution, agent
             )
             if environment.is_closed:
                 break
@@ -110,7 +102,7 @@ def main():
             reward, is_alive = environment.move_snake(action)
 
             # Update the score evolution
-            score_evolution.update_score(reward, len(environment.snake.body))
+            score_evolution.turn_update(reward, len(environment.snake.body))
 
             # Get the new state
             new_state, new_pandas_state = interpreter.interpret(environment)
@@ -118,7 +110,9 @@ def main():
             cli.save_state(environment, new_pandas_state, controller, True)
 
             # Train short memory
-            agent.train_short_memory(state, action, reward, new_state, is_alive)
+            agent.train_short_memory(
+                state, action, reward, new_state, is_alive
+            )
 
             # Remember
             agent.learn(state, action, reward, new_state, is_alive)
@@ -140,7 +134,7 @@ def main():
                 agent.train_long_memory()
 
                 # Update the score plot
-                score_evolution.update()
+                score_evolution.game_over_update()
 
             gui.draw(environment, score_evolution, controller)
 

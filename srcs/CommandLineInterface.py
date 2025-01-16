@@ -1,22 +1,61 @@
 import pyfiglet
-from constants import BLUE, RESET
+from constants import CLEAR, BLUE, RESET
 import time
+from Environment import Environment
+from Interpreter import Interpreter
+from InterfaceController import InterfaceController
+from ScoreEvolutionPlot import ScoreEvolutionPlot
 
 
 class CommandLineInterface:
 
-    def __init__(self, fps):
-        self.welcome_message()
+    """
+
+    Class CommandLineInterface:
+
+    This class is used to display the game in the terminal. It is used to
+    display the game state, the action chosen by the agent, the reward obtained
+    and the game over message.
+
+    """
+
+    def __init__(self, args):
+
+        """
+        Constructor of the CommandLineInterface class.
+        """
+
+        self.fps = args.fps
         self.state_str = ""
         self.new_state_str = ""
-        self.fps = fps
+        self.welcome_message()
+
+    def welcome_message(self, score_evolution=None, environment=None):
+
+        print(CLEAR + BLUE + pyfiglet.figlet_format("Learn2Slither") + RESET)
+
+        if score_evolution is not None and environment is not None:
+            print(
+                f"Game #{score_evolution.game_number} - " +
+                f"Turn #{score_evolution.turn} - " +
+                f"Snake length: {len(environment.snake.body)} - " +
+                f"Score: {score_evolution.score}\n"
+            )
+
+        print(
+            "Welcome to Learn2Slither!\n" +
+            "Press 'space' to switch between human and AI mode.\n" +
+            "In AI mode, the snake will play by itself.\n" +
+            "In human mode, you can control the snake with the arrow keys.\n" +
+            "Press 'q', 'esc' or use the close button to exit the game.\n"
+        )
 
     def print(
                 self,
-                environment,
-                score_evolution,
-                controller,
-                interpreter,
+                environment: Environment,
+                score_evolution: ScoreEvolutionPlot,
+                controller: InterfaceController,
+                interpreter: Interpreter,
                 action=None,
                 reward=None
             ):
@@ -105,33 +144,6 @@ class CommandLineInterface:
                     res[j] += " " * (max_value_len - lengths[j] + 1) + '\t'
 
         return "\n".join(res)
-
-    def welcome_message(self, score_evolution=None, environment=None):
-
-        # Clear the terminal
-        print("\033[H\033[J")
-
-        print(
-            f"{BLUE}" +
-            pyfiglet.figlet_format("Learn2Slither") +
-            f"{RESET}"
-        )
-
-        if score_evolution is not None and environment is not None:
-            print(
-                f"Game #{score_evolution.game_number} - " +
-                f"Turn #{score_evolution.turn} - " +
-                f"Snake length: {len(environment.snake.body)} - " +
-                f"Score: {score_evolution.score}\n"
-            )
-
-        print(
-            "Welcome to Learn2Slither!\n" +
-            "Press 'space' to switch between human and AI mode.\n" +
-            "In AI mode, the snake will play by itself.\n" +
-            "In human mode, you can control the snake with the arrow keys.\n" +
-            "Press 'q', 'esc' or use the close button to exit the game.\n"
-        )
 
     def print_env_state(self, is_new_state=False):
         if is_new_state:

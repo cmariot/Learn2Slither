@@ -5,6 +5,9 @@ BLUE = '\033[34m'
 GRAY = '\033[90m'
 RESET = '\033[0m'
 
+# Clear the terminal
+CLEAR = '\033[H\033[J'
+
 # Constants for the board
 GREEN_APPLE = GREEN + 'G' + RESET
 RED_APPLE = RED + 'R' + RESET

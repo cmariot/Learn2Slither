@@ -2,13 +2,13 @@ class InterfaceController:
 
     def __init__(
                 self,
-                step_by_step: bool = False,
+                args: tuple,
                 is_ai: bool = False,
                 cli_enabled: bool = True,
                 gui_enabled: bool = True
             ):
 
-        self.step_by_step = step_by_step
+        self.step_by_step = args.step_by_step
         self.ai_enabled = is_ai
         self.cli_enabled = cli_enabled
         self.gui_enabled = gui_enabled

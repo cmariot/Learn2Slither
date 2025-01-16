@@ -8,7 +8,7 @@ class GraphicalUserInteface:
 
     CELL_SIZE = 40
 
-    def __init__(self, board_width, board_height, fps):
+    def __init__(self, board_width, board_height, args):
         pygame.init()
         self.clock = pygame.time.Clock()
         self.window_width = board_width * self.CELL_SIZE
@@ -22,7 +22,7 @@ class GraphicalUserInteface:
         pygame.font.init()
         self.font = pygame.font.get_default_font()
         self.is_closed = False
-        self.fps = fps
+        self.fps = args.fps
 
     def load_snake_images(self):
 
@@ -89,7 +89,8 @@ class GraphicalUserInteface:
                 environment: Environment,
                 controller: InterfaceController,
                 gui, cli,
-                score_evolution
+                score_evolution,
+                agent
             ):
 
         for event in pygame.event.get():
@@ -114,7 +115,7 @@ class GraphicalUserInteface:
                     controller.toggle_gui(
                         gui, environment, score_evolution
                     )
-                elif key == 's':
+                elif key == 'p':
                     controller.toggle_step_by_step()
                 elif key == 'q' or key == 'escape':
                     return self.close(environment)
@@ -125,6 +126,8 @@ class GraphicalUserInteface:
                     elif key == '-':
                         key = '[-]'
                     controller.change_fps(key, gui, cli)
+                elif key == 's':
+                    agent.save(agent, score_evolution)
                 elif controller.is_human():
                     if key in ("up", "down", "left", "right"):
                         key = ('up', 'down', 'left', 'right').index(key)

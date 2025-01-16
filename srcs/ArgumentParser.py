@@ -6,7 +6,7 @@ class IsPositiveCondition(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         if values <= 0:
             raise argparse.ArgumentTypeError(
-                f"Parsing error: {self.dest} must be positive and greater than 0"
+                f"Parsing error: {self.dest} must be > 0."
             )
         setattr(namespace, self.dest, values)
 
@@ -16,7 +16,7 @@ class ArgumentParser:
     def __init__(self):
         self.parser = argparse.ArgumentParser(
             prog="Learn2Slither",
-            description='Learn2Slither is a reinforcement learning snake game.',
+            description='Learn2Slither is a reinforcement-learning snake game',
             epilog='Enjoy the game!'
         )
 
@@ -65,6 +65,21 @@ class ArgumentParser:
             "--new-model",
             action="store_true",
             help="Train a model from scratch."
+        )
+
+        # Boolean to disable the training
+        self.parser.add_argument(
+            "--dont-train",
+            action="store_false",
+            dest="train",
+            help="Do not train the model."
+        )
+
+        # Boolean to enable the plotting of the score evolution
+        self.parser.add_argument(
+            "--plot",
+            action="store_true",
+            help="Plot the score evolution."
         )
 
         # Parse the arguments
