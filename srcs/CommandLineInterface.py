@@ -1,10 +1,11 @@
 import pyfiglet
-from constants import CLEAR, BLUE, RESET
+from constants import CLEAR, BLUE, RESET, RED
 import time
 from Environment import Environment
 from Interpreter import Interpreter
 from InterfaceController import InterfaceController
-from ScoreEvolutionPlot import ScoreEvolutionPlot
+from Score import Score
+import os
 
 
 class CommandLineInterface:
@@ -30,16 +31,16 @@ class CommandLineInterface:
         self.new_state_str = ""
         self.welcome_message()
 
-    def welcome_message(self, score_evolution=None, environment=None):
+    def welcome_message(self, scores: Score = None):
 
         print(CLEAR + BLUE + pyfiglet.figlet_format("Learn2Slither") + RESET)
 
-        if score_evolution is not None and environment is not None:
+        if scores is not None:
             print(
-                f"Game #{score_evolution.game_number} - " +
-                f"Turn #{score_evolution.turn} - " +
-                f"Snake length: {len(environment.snake.body)} - " +
-                f"Score: {score_evolution.score}\n"
+                f"Game #{scores.game_number} - " +
+                f"Turn #{scores.turn} - " +
+                f"Snake length: {scores.snake_len} - " +
+                f"Score: {scores.score}\n"
             )
 
         print(
@@ -51,18 +52,14 @@ class CommandLineInterface:
         )
 
     def print(
-                self,
-                environment: Environment,
-                score_evolution: ScoreEvolutionPlot,
-                controller: InterfaceController,
-                interpreter: Interpreter,
-                action=None,
-                reward=None
-            ):
+        self, environment: Environment, scores: Score,
+        controller: InterfaceController, interpreter: Interpreter,
+        action=None, reward=None
+    ):
 
         if controller.cli_disabled():
             return
-        self.welcome_message(score_evolution, environment)
+        self.welcome_message(scores)
         if action is None and reward is None:
             _, pandas_state = interpreter.interpret(environment)
             self.save_state(environment, pandas_state, controller)
@@ -76,26 +73,18 @@ class CommandLineInterface:
             time.sleep(1 / self.fps)
 
     def save_state(
-                self,
-                environment,
-                pandas_state,
-                controller,
-                is_new_state=False
-            ):
+        self, environment, pandas_state, controller, is_new_state=False
+    ):
 
-        if is_new_state:
-            self.new_state_str = self.get_state_str(
-                environment, pandas_state, controller
-            )
-        else:
-            self.state_str = self.get_state_str(
-                environment, pandas_state, controller
-            )
+        self.__setattr__(
+            "new_state_str" if is_new_state else "state_str",
+            self.get_state_str(environment, pandas_state, controller)
+        )
 
     def get_state_str(self, environment, pandas_state, controller):
 
-        # if controller.cli_disabled():
-        #     return ""
+        if controller.cli_disabled():
+            return ""
 
         res = []
         state = environment.get_state()
@@ -165,3 +154,56 @@ class CommandLineInterface:
 
     def set_fps(self, fps):
         self.fps = fps
+
+    def print_exception(exception: Exception) -> None:
+
+        """
+        Prints detailed information about an exception, including its type,
+        message, and a detailed traceback with file, line number, and code
+        context.
+        """
+
+        if not isinstance(exception, Exception):
+            raise TypeError("The argument should be an exception.")
+
+        print(f"{RED}An exception occurred:{RESET}\n")
+
+        # Print exception type and message
+        print(f"{RED}Exception Type:{RESET} {type(exception).__name__}")
+        print(f"{RED}Exception Message:{RESET} {exception}\n")
+
+        print(f"{RED}Traceback (most recent call last):{RESET}\n")
+
+        i = 0
+        tb = exception.__traceback__
+        current_directory = os.getcwd()
+
+        while tb:
+            filename = tb.tb_frame.f_code.co_filename
+            relative_filename = filename.replace(current_directory, ".")
+            line = tb.tb_lineno
+            function_name = tb.tb_frame.f_code.co_name
+            if function_name == "<module>":
+                function_name = "Main Context"
+
+            # Retrieve and print the relevant line of code
+            try:
+                with open(filename, "r") as file:
+                    lines = file.readlines()
+                    code_context = lines[line - 1].strip()
+            except (FileNotFoundError, IndexError):
+                code_context = "Unable to retrieve code context."
+
+            # Format the traceback information
+            print(
+                f"{i}:  File: {RED}\"{relative_filename}\"{RESET}, "
+                f"Line: {RED}{line}{RESET}, " +
+                f"Function: {RED}{function_name}{RESET}\n" +
+                f"      Code Context: {RED}{code_context}{RESET}\n"
+            )
+
+            # Move to the next traceback level
+            tb = tb.tb_next
+            i += 1
+
+        print(f"{RED}End of Traceback.{RESET}")

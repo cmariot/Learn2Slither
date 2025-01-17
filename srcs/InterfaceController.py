@@ -29,11 +29,11 @@ class InterfaceController:
             print("CLI disabled, the game will run in the background")
             print("Press 'c' to enable the CLI")
 
-    def toggle_gui(self, gui, environment, score_evolution):
+    def toggle_gui(self, gui, environment, scores):
         self.gui_enabled = not self.gui_enabled
         if self.gui_enabled:
             print("GUI enabled")
-            gui.draw(environment, score_evolution, self)
+            gui.draw(environment, scores, self)
         else:
             print("GUI disabled")
             gui.disable()
@@ -50,10 +50,15 @@ class InterfaceController:
     def gui_disabled(self):
         return not self.gui_enabled
 
-    def change_fps(self, key, gui, cli):
+    def change_fps(self, key, gui, cli, shift_pressed):
 
         # Increase or decrease the FPS of the game based on the key pressed
         # Keys : '[+]' to increase the FPS and '[-]' to decrease the FPS
+
+        if key == '=' and shift_pressed:
+            key = '[+]'
+        elif key == '-':
+            key = '[-]'
 
         if key not in ['[+]', '[-]']:
             return

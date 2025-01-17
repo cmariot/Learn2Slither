@@ -22,3 +22,7 @@ NEGATIVE_REWARD = -50  # Manger une pomme rouge
 POSITIVE_REWARD = 100  # Manger une pomme verte
 SMALLLER_NEGATIVE_REWARD = -1  # Se deplacer
 BIGGER_NEGATIVE_REWARD = -100  # Collision
+
+# Constants for the training and gaming loops
+TRAINING_LOOP = True
+GAMING_LOOP = True

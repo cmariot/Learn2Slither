@@ -5,6 +5,11 @@ from constants import RED_APPLE, GREEN_APPLE, WALL, EMPTY
 
 class Environment:
 
+    """
+    The Environment class represents the game environment.
+    It contains the board, the snake, the apples and the game logic.
+    """
+
     nb_red_apples = 1
     nb_green_apples = 2
 
@@ -118,7 +123,7 @@ class Environment:
 
     def get_state(self):
         # Snake can see only in front, back, left and right of its head
-        x_head, y_head = self.snake.body[0]
+        x_head, y_head = self.snake.get_head_position()
         state = [
             [
                 self[x][y] if x == x_head or y == y_head else ' '
@@ -134,3 +139,9 @@ class Environment:
 
     def __getitem__(self, key):
         return self.board[key]
+
+    def is_training(self, gui, scores):
+        return (
+            not gui.is_closed and
+            scores.training_session_not_finished()
+        )

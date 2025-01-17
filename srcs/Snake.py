@@ -4,18 +4,13 @@ from constants import (
     NEGATIVE_REWARD, POSITIVE_REWARD, SMALLLER_NEGATIVE_REWARD,
     BIGGER_NEGATIVE_REWARD
 )
+from Directions import Directions
 
 
 class Snake:
 
     initial_snake_length = 3
-
-    directions = {
-        'up': (0, -1),
-        'down': (0, 1),
-        'left': (-1, 0),
-        'right': (1, 0)
-    }
+    directions = Directions().get_directions()
 
     def __init__(self, board):
 
@@ -76,11 +71,11 @@ class Snake:
         # Set the snake on the board
         for x, y in self.body:
             board.board[x][y] = SNAKE_BODY
-        x, y = self.body[0]
+        x, y = self.get_head_position()
         board.board[x][y] = SNAKE_HEAD
 
     def move(self, board):
-        head_x, head_y = self.body[0]
+        head_x, head_y = self.get_head_position()
         dir_x, dir_y = self.direction
         new_head = (head_x + dir_x, head_y + dir_y)
         next_cell = board[new_head[0]][new_head[1]]
@@ -98,7 +93,7 @@ class Snake:
     def move_forward(self, board, new_head):
         x, y = new_head
         board[x][y] = SNAKE_HEAD
-        x, y = self.body[0]
+        x, y = self.get_head_position()
         board[x][y] = SNAKE_BODY
         x, y = self.body[-1]
         board[x][y] = EMPTY
@@ -109,7 +104,7 @@ class Snake:
         # Green apple : grow the snake and add a new Green apple
         x, y = new_head
         board[x][y] = SNAKE_HEAD
-        x, y = self.body[0]
+        x, y = self.get_head_position()
         board[x][y] = SNAKE_BODY
         self.body = [new_head] + self.body
         board.new_apple(GREEN_APPLE)
@@ -121,7 +116,7 @@ class Snake:
             return self.die("Snake has no more body", board, new_head)
         board[x][y] = SNAKE_HEAD
         if len(self.body) > 2:
-            x, y = self.body[0]
+            x, y = self.get_head_position()
             board[x][y] = SNAKE_BODY
         x, y = self.body[-2]
         board[x][y] = EMPTY
@@ -135,7 +130,7 @@ class Snake:
         for x, y in self.body:
             board[x][y] = EMPTY
         if new_head is not None:
-            x_body, y_body = self.body[0]
+            x_body, y_body = self.get_head_position()
             board[x_body][y_body] = EMPTY
             self.body[0] = new_head
             board[new_head[0]][new_head[1]] = DEAD_SNAKE
@@ -150,7 +145,7 @@ class Snake:
                 return index
         return -1
 
-    def get_snake_length(self):
+    def len(self):
         return len(self.body)
 
     def get_head_position(self):

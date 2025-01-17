@@ -1,19 +1,14 @@
 import argparse
 
 
-class IsPositiveCondition(argparse.Action):
-
-    def __call__(self, parser, namespace, values, option_string=None):
-        if values <= 0:
-            raise argparse.ArgumentTypeError(
-                f"Parsing error: {self.dest} must be > 0."
-            )
-        setattr(namespace, self.dest, values)
-
-
 class ArgumentParser:
 
     def __init__(self):
+
+        """
+        Initialize the argument parser.
+        """
+
         self.parser = argparse.ArgumentParser(
             prog="Learn2Slither",
             description='Learn2Slither is a reinforcement-learning snake game',
@@ -26,7 +21,7 @@ class ArgumentParser:
             type=int,
             default=0,
             help="Number of training sessions to execute.",
-            action=IsPositiveCondition
+            action=self.IsPositiveCondition
         )
 
         # Argument to define the FPS of the game
@@ -35,7 +30,7 @@ class ArgumentParser:
             type=int,
             default=20,
             help="Frames per second of the game.",
-            action=IsPositiveCondition
+            action=self.IsPositiveCondition
         )
 
         # AI in step by step mode
@@ -75,15 +70,14 @@ class ArgumentParser:
             help="Do not train the model."
         )
 
-        # Boolean to enable the plotting of the score evolution
-        self.parser.add_argument(
-            "--plot",
-            action="store_true",
-            help="Plot the score evolution."
-        )
+    def parse_args(self):
+
+        """
+        Parse the arguments and check for incompatible arguments.
+        """
 
         # Parse the arguments
-        self.args = self.parse_args()
+        self.args = self.parser.parse_args()
 
         # Incompatible arguments :
         # - --model-path and --new-model
@@ -92,5 +86,18 @@ class ArgumentParser:
                 "--model-path and --new-model are incompatible arguments."
             )
 
-    def parse_args(self):
-        return self.parser.parse_args()
+        return self.args
+
+    class IsPositiveCondition(argparse.Action):
+
+        """
+        Utility class to check if a value is strictly positive.
+        Usage: action=IsPositiveCondition in argparse.add_argument method.
+        """
+
+        def __call__(self, parser, namespace, values, option_string=None):
+            if values <= 0:
+                raise argparse.ArgumentTypeError(
+                    f"Parsing error: {self.dest} must be > 0."
+                )
+            setattr(namespace, self.dest, values)

@@ -4,10 +4,12 @@ import torch
 from model import Linear_QNet, QTrainer
 import os
 import pickle
+from Score import Score
+from numpy import ndarray
 
 
 MAX_MEMORY = 100_000
-BATCH_SIZE = 10_000
+BATCH_SIZE = 100_000
 
 
 class Agent:
@@ -28,7 +30,7 @@ class Agent:
             else:
                 self.load_max_trained_model()
 
-        self.train = args.train
+        self._train = args.train
         self.dont_save = args.dont_save
 
     def choose_action(self, state, nb_games):
@@ -54,10 +56,10 @@ class Agent:
             else:
                 return 0
 
-        if not self.train:
+        if not self._train:
             self.epsilon = 0
         else:
-            self.epsilon = update_epsilon(nb_games)
+            self.epsilon = 0.01
 
         n = random.uniform(0, 1)
 
@@ -65,7 +67,6 @@ class Agent:
         prediction = self.model(state0)
 
         # Exploration vs exploitation
-
         if n < self.epsilon:
             # Random action : action = random.randint(0, 3)
             # vs. Second best action :
@@ -73,25 +74,36 @@ class Agent:
 
         return torch.argmax(prediction).item()
 
+    def train(
+                self,
+                state: ndarray,
+                action: int,
+                reward: int,
+                next_state: ndarray,
+                is_alive: bool
+            ):
+        self.train_short_memory(state, action, reward, next_state, is_alive)
+        self.learn(state, action, reward, next_state, is_alive)
+
     def learn(
                 self,
-                state,
-                action,
-                reward,
-                next_state,
-                snake_alive,
+                state: ndarray,
+                action: int,
+                reward: int,
+                next_state: ndarray,
+                is_alive: bool
             ):
 
-        if not self.train:
+        if not self._train:
             return
 
-        self.memory.append((state, action, reward, next_state, snake_alive))
+        self.memory.append((state, action, reward, next_state, is_alive))
         if len(self.memory) > MAX_MEMORY:
             self.memory.popleft()
 
     def train_long_memory(self):
 
-        if not self.train:
+        if not self._train:
             return
 
         if len(self.memory) > BATCH_SIZE:
@@ -99,28 +111,28 @@ class Agent:
         else:
             mini_sample = self.memory
 
-        states, actions, rewards, next_states, snake_alives = zip(*mini_sample)
-        self.trainer.train_step(
-            states, actions, rewards, next_states, snake_alives
-        )
+        for state, action, reward, next_state, is_alive in mini_sample:
+            self.trainer.train_step(
+                state, action, reward, next_state, is_alive
+            )
 
     def train_short_memory(
                 self,
-                state,
-                action,
-                reward,
-                next_state,
-                snake_alive
+                state: ndarray,
+                action: int,
+                reward: int,
+                next_state: ndarray,
+                is_alive: bool
             ):
 
-        if not self.train:
+        if not self._train:
             return
 
-        self.trainer.train_step(state, action, reward, next_state, snake_alive)
+        self.trainer.train_step(state, action, reward, next_state, is_alive)
 
-    def save(self, agent, score_evolution):
+    def save(self, scores: Score):
 
-        if self.dont_save or not self.train:
+        if self.dont_save or not self._train:
             return
 
         model_path = os.path.join(os.getcwd(), "models")
@@ -128,7 +140,7 @@ class Agent:
             os.makedirs(model_path)
 
         # Create a directory to store the model
-        model_directory_name = f"game_{score_evolution.game_number}"
+        model_directory_name = f"game_{scores.game_number}"
 
         model_path = os.path.join(model_path, model_directory_name)
         if not os.path.exists(model_path):
@@ -136,11 +148,10 @@ class Agent:
 
         model_file = os.path.join(model_path, "model.pkl")
         with open(model_file, "wb") as f:
-            pickle.dump(agent, f)
+            pickle.dump(self, f)
         print(f"Model saved as {model_file}")
 
-        score_evolution.save(model_path)
-        del score_evolution
+        scores.save(model_path)
 
     def load_max_trained_model(self):
         # Load the most trained model if it exists

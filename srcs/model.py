@@ -9,13 +9,15 @@ class Linear_QNet(nn.Module):
 
     def __init__(self):
         super().__init__()
-        self.linear1 = nn.Linear(16, 512)
-        self.linear2 = nn.Linear(512, 4)
+        self.linear1 = nn.Linear(16, 256)
+        self.linear2 = nn.Linear(256, 64)  # Ajout de la couche cachée
+        self.linear3 = nn.Linear(64, 4)   # Nouvelle couche de sortie
         self.load()
 
     def forward(self, x):
         x = F.relu(self.linear1(x))
-        x = self.linear2(x)
+        x = F.relu(self.linear2(x))  # Ajout de la couche cachée
+        x = self.linear3(x)          # Nouvelle couche de sortie
         return x
 
     def save(self, file_name="model.pth"):
@@ -23,13 +25,13 @@ class Linear_QNet(nn.Module):
         if not os.path.exists(model_folder_path):
             os.makedirs(model_folder_path)
         file_name = os.path.join(model_folder_path, file_name)
-        torch.save(self, file_name)
+        torch.save(self.state_dict(), file_name)
         print("Model saved")
 
     def load(self, file_name="model.pth"):
         file_name = os.path.join("./model", file_name)
         if os.path.exists(file_name):
-            self = torch.load(file_name)
+            self.load_state_dict(torch.load(file_name))
             print("Model loaded")
         return self
 
@@ -61,7 +63,7 @@ class QTrainer:
         if game_over:
             target[0][action] = reward
         else:
-            target[0][action] = reward + self.gamma * action
+            target[0][action] = reward + self.gamma * torch.max(self.model(next_state)).item()
 
         self.optimizer.zero_grad()
         loss = self.criterion(target, prediction)

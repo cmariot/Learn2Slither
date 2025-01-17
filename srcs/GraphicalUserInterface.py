@@ -2,9 +2,12 @@ from Environment import Environment
 from constants import RED_APPLE, GREEN_APPLE, SNAKE_HEAD, SNAKE_BODY, WALL
 import pygame
 from InterfaceController import InterfaceController
+from CommandLineInterface import CommandLineInterface
+from Score import Score
+from Agent import Agent
 
 
-class GraphicalUserInteface:
+class GraphicalUserInterface:
 
     CELL_SIZE = 40
 
@@ -88,9 +91,9 @@ class GraphicalUserInteface:
                 self,
                 environment: Environment,
                 controller: InterfaceController,
-                gui, cli,
-                score_evolution,
-                agent
+                cli: CommandLineInterface,
+                scores: Score,
+                agent: Agent
             ):
 
         for event in pygame.event.get():
@@ -99,36 +102,44 @@ class GraphicalUserInteface:
             elif event.type == pygame.KEYDOWN:
                 key = pygame.key.name(event.key)
 
-                # print(f"{key} pressed")
-
                 if (
                     key in ('return', 'enter') and
                     controller.is_ai() and
                     controller.step_by_step
                 ):
+                    # Perform the next move in step by step mode
                     return True, None
+
                 elif key == 'space':
+                    # Switch between AI and Human mode
                     controller.toggle_ai()
+
                 elif key == 'c':
+                    # Enable/disable the CLI
                     controller.toggle_cli()
+
                 elif key == 'g':
-                    controller.toggle_gui(
-                        gui, environment, score_evolution
-                    )
+                    # Enable/disable the GUI
+                    controller.toggle_gui(self, environment, scores)
+
                 elif key == 'p':
+                    # Enable/disable the step by step mode
                     controller.toggle_step_by_step()
+
                 elif key == 'q' or key == 'escape':
                     return self.close(environment)
+
                 elif key in ('[+]', '[-]', '-', '='):
+                    # Increase or decrease the FPS (+/- 10 fps)
                     shift_pressed = pygame.key.get_mods() & pygame.KMOD_SHIFT
-                    if key == '=' and shift_pressed:
-                        key = '[+]'
-                    elif key == '-':
-                        key = '[-]'
-                    controller.change_fps(key, gui, cli)
+                    controller.change_fps(key, self, cli, shift_pressed)
+
                 elif key == 's':
-                    agent.save(agent, score_evolution)
+                    # Save the model and the score evolution
+                    agent.save(scores)
+
                 elif controller.is_human():
+                    # Handle the key pressed by the user
                     if key in ("up", "down", "left", "right"):
                         key = ('up', 'down', 'left', 'right').index(key)
                         return True, key
@@ -166,14 +177,14 @@ class GraphicalUserInteface:
 
                         # Get the direction of the snake based on the body list
                         direction = environment.snake.direction
-                        if direction == (0, -1):
-                            image = self.snake_head_up
-                        elif direction == (0, 1):
-                            image = self.snake_head_down
-                        elif direction == (-1, 0):
-                            image = self.snake_head_left
-                        else:
-                            image = self.snake_head_right
+
+                        image = {
+                            (0, -1): self.snake_head_up,
+                            (0, 1): self.snake_head_down,
+                            (-1, 0): self.snake_head_left,
+                            (1, 0): self.snake_head_right
+                        }[direction]
+
                         self.screen.blit(
                             image,
                             (x * self.CELL_SIZE, y * self.CELL_SIZE)
@@ -181,7 +192,7 @@ class GraphicalUserInteface:
 
                     else:
 
-                        snake_length = environment.snake.get_snake_length()
+                        snake_length = environment.snake.len()
                         body_index = environment.snake.get_body_index(x, y)
 
                         # Tail of the snake
@@ -295,23 +306,28 @@ class GraphicalUserInteface:
         # Display the score on the screen
         font = pygame.font.Font(self.font, 24)
         score_text = font.render(
-            f"Score: {scores.score}",
+            f"Score: {scores.snake_len}",
             True,
             (170, 215, 81)
         )
         self.screen.blit(score_text, (10, 10))
 
-        # Display the high score on the screen
-        high_score_text = font.render(
-            f"Record: {scores.high_score}",
+        # Display the menu button on the screen
+        menu_text = font.render(
+            "Menu",
             True,
             (170, 215, 81)
         )
+        menu_rect = menu_text.get_rect()
         WINDOW_WIDTH = environment.width * self.CELL_SIZE
-        TEST_WIDTH = high_score_text.get_width()
-        x = WINDOW_WIDTH - TEST_WIDTH - 10
+        x = WINDOW_WIDTH - menu_rect.width - 10
         y = 10
-        self.screen.blit(high_score_text, (x, y))
+        self.screen.blit(menu_text, (x, y))
+
+        # TEST_WIDTH = high_score_text.get_width()
+        # x = WINDOW_WIDTH - TEST_WIDTH - 10
+        # y = 10
+        # self.screen.blit(high_score_text, (x, y))
 
         # Display the game_number on the screen (center bottom)
         game_number_text = font.render(
