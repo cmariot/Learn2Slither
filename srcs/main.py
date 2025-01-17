@@ -9,6 +9,71 @@ from ArgumentParser import ArgumentParser
 from constants import TRAINING_LOOP, GAMING_LOOP
 
 
+CONTINUE = 0
+BREAK = 1
+
+
+def play_step(
+    environment: Environment,
+    interpreter: Interpreter,
+    agent: Agent,
+    controller: InterfaceController,
+    gui: GraphicalUserInterface,
+    cli: CommandLineInterface,
+    score: Score
+) -> int:
+
+    """
+    This function is called at each turn of the game.
+    It handles the key pressed by the user, the move of the snake,
+    the reward, the training of the agent, the game over
+    and the updating of the score.
+    """
+
+    gui.draw(environment, score, controller)
+
+    should_perform_move, action = gui.handle_key_pressed(
+        environment, controller, cli, score, agent
+    )
+
+    if gui.is_closed():
+        return BREAK
+    elif not should_perform_move:
+        return CONTINUE
+
+    # Get the current state
+    state = interpreter.interpret(environment, controller, cli, True)
+
+    if controller.is_ai():
+        # The agent choose an action based on the state
+        action = agent.choose_action(state, score.game_number)
+
+    # Perform move and get the reward
+    reward = environment.move_snake(action)
+
+    # Update the score based on the reward at each step
+    score.turn_update(reward, environment.snake.len())
+
+    # Get the new state
+    new_state = interpreter.interpret(environment, controller, cli)
+
+    # Train the agent based on the new state and the reward
+    agent.train(state, action, reward, new_state, environment.is_game_over)
+
+    cli.print(
+        environment, score, controller, interpreter,
+        action, reward, agent=agent
+    )
+
+    if environment.is_game_over:
+        gui.game_over(environment, controller)
+        agent.train_long_memory()
+        score.game_over_update()
+        return BREAK
+
+    return CONTINUE
+
+
 def main(args: tuple) -> None:
 
     environment = Environment()
@@ -26,57 +91,13 @@ def main(args: tuple) -> None:
 
         while GAMING_LOOP:
 
-            gui.draw(environment, score, controller)
-
-            # Handle the key pressed by the user
-            should_perform_move, action = gui.handle_key_pressed(
-                environment, controller, cli, score, agent
-            )
-            if environment.is_closed:
-                break
-            elif not should_perform_move:
-                continue
-
-            # If the game mode is AI or if the user pressed a key in human mode
-            # perform the move
-
-            # Get the current state
-            # TODO: combine the two lines below
-            state, pandas_state = interpreter.interpret(environment)
-            cli.save_state(environment, pandas_state, controller)
-
-            if controller.is_ai():
-                # The agent choose an action based on the state
-                action = agent.choose_action(state, score.game_number)
-
-            # Perform move and get the reward
-            reward, is_alive = environment.move_snake(action)
-
-            # Update the score based on the reward at each step
-            score.turn_update(reward, environment.snake.len())
-
-            # Get the new state
-            # TODO: combine the two lines below
-            new_state, new_pandas_state = interpreter.interpret(environment)
-            cli.save_state(environment, new_pandas_state, controller, True)
-
-            # Train the agent based on the new state and the reward
-            agent.train(state, action, reward, new_state, is_alive)
-
-            cli.print(
-                environment, score, controller, interpreter, action, reward
-            )
-
-            if environment.is_game_over:
-                gui.game_over(environment, controller)
-                agent.train_long_memory()
-                score.game_over_update()
+            if play_step(
+                environment, interpreter, agent, controller, gui, cli, score
+            ) != CONTINUE:
                 break
 
-        # Reset the environment (snake, food, etc.) at the end of each game
         environment.reset()
 
-    # Save the agent and the scores
     agent.save(score)
 
 

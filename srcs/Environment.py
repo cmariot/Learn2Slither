@@ -52,11 +52,14 @@ class Environment:
         self.current_red_apples = self.nb_red_apples
 
         self.is_game_over = False
-        self.is_closed = False
 
         self.game_over_message = ""
 
     def reset(self):
+
+        """
+        Reset the environment (snake, food, etc.) at the end of each game
+        """
 
         # Reset the board with all cells set to 0 and walls around
         self.board = [
@@ -119,7 +122,7 @@ class Environment:
             if is_game_over:
                 self.snake.direction = previous_direction
                 self.game_over(snake_message)
-        return reward, not self.is_game_over
+        return reward
 
     def get_state(self):
         # Snake can see only in front, back, left and right of its head
@@ -142,6 +145,6 @@ class Environment:
 
     def is_training(self, gui, scores):
         return (
-            not gui.is_closed and
+            not gui.is_closed() and
             scores.training_session_not_finished()
         )

@@ -24,7 +24,7 @@ class GraphicalUserInterface:
         pygame.display.set_caption("Learn2Slither")
         pygame.font.init()
         self.font = pygame.font.get_default_font()
-        self.is_closed = False
+        self._is_closed = False
         self.fps = args.fps
 
     def load_snake_images(self):
@@ -88,18 +88,27 @@ class GraphicalUserInterface:
             )
 
     def handle_key_pressed(
-                self,
-                environment: Environment,
-                controller: InterfaceController,
-                cli: CommandLineInterface,
-                scores: Score,
-                agent: Agent
-            ):
+        self,
+        environment: Environment,
+        controller: InterfaceController,
+        cli: CommandLineInterface,
+        scores: Score,
+        agent: Agent
+    ) -> tuple[bool, int]:
+
+        """
+        Handle the key pressed by the user.
+        Return a tuple with a boolean to indicate if the move should be
+        performed and the action to perform as an integer.
+        """
 
         for event in pygame.event.get():
+
             if event.type == pygame.QUIT:
-                return self.close(environment)
+                return self.close()
+
             elif event.type == pygame.KEYDOWN:
+
                 key = pygame.key.name(event.key)
 
                 if (
@@ -127,7 +136,7 @@ class GraphicalUserInterface:
                     controller.toggle_step_by_step()
 
                 elif key == 'q' or key == 'escape':
-                    return self.close(environment)
+                    return self.close()
 
                 elif key in ('[+]', '[-]', '-', '='):
                     # Increase or decrease the FPS (+/- 10 fps)
@@ -142,13 +151,24 @@ class GraphicalUserInterface:
                     # Handle the key pressed by the user
                     if key in ("up", "down", "left", "right"):
                         key = ('up', 'down', 'left', 'right').index(key)
+                        agent.action = key
                         return True, key
 
         if controller.step_by_step and controller.is_ai():
             return False, None
+
         return controller.is_ai(), None
 
-    def draw(self, environment, scores, controller: InterfaceController):
+    def draw(
+        self,
+        environment: Environment,
+        scores: Score,
+        controller: InterfaceController
+    ):
+
+        """
+        Draw the game board on the pygame window
+        """
 
         if controller.gui_disabled():
             return
@@ -382,10 +402,14 @@ class GraphicalUserInterface:
         pygame.display.flip()
         pygame.time.wait(500)
 
-    def close(self, environment: Environment):
+    def close(self):
+
+        """
+        Close the pygame window
+        """
+
         pygame.quit()
-        environment.is_closed = True
-        self.is_closed = True
+        self._is_closed = True
         return False, None
 
     def disable(self):
@@ -430,3 +454,9 @@ class GraphicalUserInterface:
     def set_fps(self, fps):
         self.fps = fps
         self.clock.tick(self.fps)
+
+    def is_closed(self):
+        """
+        Return True if the pygame window is closed
+        """
+        return self._is_closed

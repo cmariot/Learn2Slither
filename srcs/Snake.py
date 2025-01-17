@@ -1,6 +1,6 @@
 import random
 from constants import (
-    SNAKE_HEAD, SNAKE_BODY, RED_APPLE, GREEN_APPLE, WALL, EMPTY, DEAD_SNAKE,
+    SNAKE_HEAD, SNAKE_BODY, RED_APPLE, GREEN_APPLE, WALL, EMPTY,
     NEGATIVE_REWARD, POSITIVE_REWARD, SMALLLER_NEGATIVE_REWARD,
     BIGGER_NEGATIVE_REWARD
 )
@@ -80,9 +80,9 @@ class Snake:
         new_head = (head_x + dir_x, head_y + dir_y)
         next_cell = board[new_head[0]][new_head[1]]
         if next_cell == WALL:
-            return self.die("Snake hit the wall", board, new_head)
+            return self.die("Snake hit the wall")
         elif next_cell == SNAKE_BODY:
-            return self.die("Snake collision", board, new_head)
+            return self.die("Snake collision")
         elif next_cell == RED_APPLE:
             return self.shrink(board, new_head)
         elif next_cell == GREEN_APPLE:
@@ -113,7 +113,7 @@ class Snake:
     def shrink(self, board, new_head):
         x, y = new_head
         if len(self.body) == 1:
-            return self.die("Snake has no more body", board, new_head)
+            return self.die("Snake has no more body")
         board[x][y] = SNAKE_HEAD
         if len(self.body) > 2:
             x, y = self.get_head_position()
@@ -126,14 +126,7 @@ class Snake:
         board.new_apple(RED_APPLE)
         return False, NEGATIVE_REWARD, "Snake shrunk by eating a red apple"
 
-    def die(self, message, board, new_head=None):
-        for x, y in self.body:
-            board[x][y] = EMPTY
-        if new_head is not None:
-            x_body, y_body = self.get_head_position()
-            board[x_body][y_body] = EMPTY
-            self.body[0] = new_head
-            board[new_head[0]][new_head[1]] = DEAD_SNAKE
+    def die(self, message):
         return True, BIGGER_NEGATIVE_REWARD, message
 
     def get_body_index(self, x, y):

@@ -18,9 +18,9 @@ WALL = GRAY + 'W' + RESET
 DEAD_SNAKE = GRAY + 'X' + RESET
 
 # Constants for the rewards
-NEGATIVE_REWARD = -50  # Manger une pomme rouge
-POSITIVE_REWARD = 100  # Manger une pomme verte
-SMALLLER_NEGATIVE_REWARD = -1  # Se deplacer
+NEGATIVE_REWARD = -500  # Manger une pomme rouge
+POSITIVE_REWARD = 500  # Manger une pomme verte
+SMALLLER_NEGATIVE_REWARD = -5  # Se deplacer
 BIGGER_NEGATIVE_REWARD = -100  # Collision
 
 # Constants for the training and gaming loops

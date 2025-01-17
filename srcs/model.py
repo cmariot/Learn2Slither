@@ -2,38 +2,24 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
-import os
 
 
-class Linear_QNet(nn.Module):
+class DeepQNetwork(nn.Module):
 
     def __init__(self):
-        super().__init__()
-        self.linear1 = nn.Linear(16, 256)
-        self.linear2 = nn.Linear(256, 64)  # Ajout de la couche cachée
-        self.linear3 = nn.Linear(64, 4)   # Nouvelle couche de sortie
-        self.load()
+        super(DeepQNetwork, self).__init__()
+
+        self.input_layer = nn.Linear(16, 128)
+        self.hidden_layer_1 = nn.Linear(128, 128)
+        self.output_layer = nn.Linear(128, 4)
 
     def forward(self, x):
-        x = F.relu(self.linear1(x))
-        x = F.relu(self.linear2(x))  # Ajout de la couche cachée
-        x = self.linear3(x)          # Nouvelle couche de sortie
+
+        x = F.relu(self.input_layer(x))
+        x = F.relu(self.hidden_layer_1(x))
+        x = self.output_layer(x)
+
         return x
-
-    def save(self, file_name="model.pth"):
-        model_folder_path = "./model"
-        if not os.path.exists(model_folder_path):
-            os.makedirs(model_folder_path)
-        file_name = os.path.join(model_folder_path, file_name)
-        torch.save(self.state_dict(), file_name)
-        print("Model saved")
-
-    def load(self, file_name="model.pth"):
-        file_name = os.path.join("./model", file_name)
-        if os.path.exists(file_name):
-            self.load_state_dict(torch.load(file_name))
-            print("Model loaded")
-        return self
 
 
 class QTrainer:
@@ -60,10 +46,11 @@ class QTrainer:
         prediction = self.model(state)
         target = prediction.clone()
         target = target.detach()
+
         if game_over:
             target[0][action] = reward
         else:
-            target[0][action] = reward + self.gamma * torch.max(self.model(next_state)).item()
+            target[0][action] = reward + self.gamma * action
 
         self.optimizer.zero_grad()
         loss = self.criterion(target, prediction)

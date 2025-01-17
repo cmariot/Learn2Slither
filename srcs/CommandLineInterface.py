@@ -1,10 +1,6 @@
 import pyfiglet
 from constants import CLEAR, BLUE, RESET, RED
 import time
-from Environment import Environment
-from Interpreter import Interpreter
-from InterfaceController import InterfaceController
-from Score import Score
 import os
 
 
@@ -31,7 +27,7 @@ class CommandLineInterface:
         self.new_state_str = ""
         self.welcome_message()
 
-    def welcome_message(self, scores: Score = None):
+    def welcome_message(self, scores=None):
 
         print(CLEAR + BLUE + pyfiglet.figlet_format("Learn2Slither") + RESET)
 
@@ -52,32 +48,39 @@ class CommandLineInterface:
         )
 
     def print(
-        self, environment: Environment, scores: Score,
-        controller: InterfaceController, interpreter: Interpreter,
-        action=None, reward=None
+        self, environment, scores, controller, interpreter,
+        action=None, reward=None, is_first_state=False, agent=None
     ):
 
         if controller.cli_disabled():
             return
-        self.welcome_message(scores)
+
         if action is None and reward is None:
-            _, pandas_state = interpreter.interpret(environment)
-            self.save_state(environment, pandas_state, controller)
+            # Only for the first call
+            interpreter.interpret(
+                environment, controller, self, is_first_state
+            )
+
+        self.welcome_message(scores)
         self.print_env_state()
-        if action is not None and reward is not None:
-            self.print_action(action, controller.is_ai(), reward)
+        self.print_action(agent, reward, controller.is_ai())
         self.print_env_state(is_new_state=True)
-        if environment.is_game_over:
-            self.game_over(environment.game_over_message)
+        self.print_game_over(environment)
+
         if controller.gui_disabled():
             time.sleep(1 / self.fps)
 
     def save_state(
-        self, environment, pandas_state, controller, is_new_state=False
+        self, environment, pandas_state, controller, is_first_state
     ):
 
+        """
+        Save the state of the environment in a string format to display it
+        in the terminal.
+        """
+
         self.__setattr__(
-            "new_state_str" if is_new_state else "state_str",
+            "state_str" if is_first_state else "new_state_str",
             self.get_state_str(environment, pandas_state, controller)
         )
 
@@ -108,15 +111,7 @@ class CommandLineInterface:
         lengths = []
         for i, (column_name, value) in enumerate(pandas_state.items()):
             column_name: str = column_name
-            if (
-                column_name.startswith("horizontal") or
-                column_name.startswith("vertical")
-            ):
-                int_values = ('G', '0', 'R', 'W', 'S', 'H', 'X')
-                value = f"{column_name}: {int_values[value.iloc[0]]}"
-            else:
-                value = f"{column_name}: {value.iloc[0]}"
-
+            value = f"{column_name}: {value.iloc[0]}"
             if i < len(res):
                 lengths.append(len(value))
                 if len(value) > max_value_len:
@@ -141,16 +136,32 @@ class CommandLineInterface:
             state = self.state_str
         print(state, end="\n\n")
 
-    def print_action(self, action, is_ai, reward):
-        action = ['up', 'down', 'left', 'right'][action]
-        if is_ai:
-            print(f"Agent chose action: {action}")
-        else:
-            print(f"User chose action: {action}")
-        print(f"Reward: {reward}\n")
+    def print_action(self, agent, reward, is_ai):
 
-    def game_over(self, game_over_message):
-        print(f"{BLUE}Game over:{RESET} {game_over_message}\n")
+        if agent is None:
+            return
+
+        action = ['up', 'down', 'left', 'right'][agent.action]
+
+        if is_ai:
+            print(
+                f"Agent chose action: {action:<5} " +
+                f"({agent.choice_type}, " +
+                f"epsilon = {agent.epsilon * 100:.2f}% - " +
+                f"memory length = {len(agent.memory)}) - " +
+                f"Reward: {reward}\n"
+            )
+        else:
+            print(
+                f"User chose action: {action}. " +
+                f"Reward: {reward}\n"
+            )
+
+    def print_game_over(self, environment):
+        if environment.is_game_over:
+            print(f"{BLUE}Game over:{RESET} {environment.game_over_message}\n")
+        else:
+            print(f"{environment.game_over_message}\n")
 
     def set_fps(self, fps):
         self.fps = fps
