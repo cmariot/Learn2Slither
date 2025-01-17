@@ -9,9 +9,9 @@ class DeepQNetwork(nn.Module):
     def __init__(self):
         super(DeepQNetwork, self).__init__()
 
-        self.input_layer = nn.Linear(16, 128)
-        self.hidden_layer_1 = nn.Linear(128, 128)
-        self.output_layer = nn.Linear(128, 4)
+        self.input_layer = nn.Linear(160, 512)
+        self.hidden_layer_1 = nn.Linear(512, 256)
+        self.output_layer = nn.Linear(256, 4)
 
     def forward(self, x):
 

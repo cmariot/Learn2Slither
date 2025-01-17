@@ -111,11 +111,12 @@ class CommandLineInterface:
         lengths = []
         for i, (column_name, value) in enumerate(pandas_state.items()):
             column_name: str = column_name
+            if ('[' in column_name) and (']' in column_name):
+                continue
             value = f"{column_name}: {value.iloc[0]}"
+            max_value_len = max(max_value_len, len(value))
             if i < len(res):
                 lengths.append(len(value))
-                if len(value) > max_value_len:
-                    max_value_len = len(value)
                 res[i] += value
             else:
                 idx = i % len(res)
@@ -126,6 +127,7 @@ class CommandLineInterface:
             if i % len(res) == len(res) - 1:
                 for j in range(len(res)):
                     res[j] += " " * (max_value_len - lengths[j] + 1) + '\t'
+                max_value_len = 0
 
         return "\n".join(res)
 

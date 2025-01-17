@@ -1,10 +1,12 @@
 from Environment import Environment
 import numpy as np
 from pandas import DataFrame
-from constants import WALL, GREEN_APPLE, RED_APPLE, SNAKE_BODY
 from Directions import Directions
 from CommandLineInterface import CommandLineInterface
 from InterfaceController import InterfaceController
+from constants import (
+    WALL, GREEN_APPLE, RED_APPLE, SNAKE_BODY, SNAKE_HEAD, EMPTY
+)
 
 
 class Interpreter:
@@ -48,8 +50,19 @@ class Interpreter:
 
         dictionary = dict(sorted(dictionary.items()))
 
-        if environment.is_game_over:
-            dictionary = {key: 0 for key in dictionary.keys()}
+        for x in range(0, len(state)):
+            for y in range(0, len(state)):
+                value = state[x][y]
+                dict_snake_int = {
+                    EMPTY: ord('0'),
+                    SNAKE_HEAD: ord('H'),
+                    SNAKE_BODY: ord('S'),
+                    GREEN_APPLE: ord('G'),
+                    RED_APPLE: ord('R'),
+                    WALL: ord('W'),
+                    ' ': 0  # Unknown value in the state
+                }
+                dictionary[f'[{x}][{y}]'] = dict_snake_int[value]
 
         dataframe = DataFrame(dictionary, columns=dictionary.keys(), index=[0])
         numpy_state = np.array(dataframe, dtype=np.float32)[0]
@@ -59,6 +72,13 @@ class Interpreter:
         return numpy_state
 
     def _apple_distance(self, state, x, y, apple, direction):
+
+        """
+        Return the distance between the snake head (x, y) and the apple
+        passed as argument (GREEN_APPLE or RED_APPLE) in the direction
+        passed as argument.
+        """
+
         distance = 0
         state_len = len(state)
         while (
@@ -74,6 +94,13 @@ class Interpreter:
         return distance
 
     def _danger_distance(self, state, x, y, direction, no_snake_body):
+
+        """
+        Return the minimum distance between the snake head (x, y) and a
+        danger (wall, snake body, red apple if no_snake_body is True) in
+        the direction passed as argument.
+        """
+
         distance = 0
         state_len = len(state)
         while (
@@ -88,6 +115,12 @@ class Interpreter:
         return distance
 
     def _wall_distance(self, state, x, y, direction):
+
+        """
+        Return the distance between the snake head (x, y) and the wall in the
+        direction passed as argument.
+        """
+
         distance = 0
         state_len = len(state)
         while (
