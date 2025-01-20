@@ -1,5 +1,4 @@
 import random
-from collections import namedtuple, deque
 import torch
 from model import DeepQNetwork, QTrainer
 import os
@@ -7,41 +6,26 @@ import pickle
 from Score import Score
 from numpy import ndarray
 import math
+from ReplayMemory import ReplayMemory
 
 
 MAX_MEMORY = 200_000
 BATCH_SIZE = 10_000
 
-Transition = namedtuple(
-    # a named tuple representing a single transition in our environment.
-    'Transition',
-    ('state', 'action', 'reward', 'next_state', 'game_over')
-)
+LEARNING_RATE = 0.001
 
-
-class ReplayMemory(object):
-
-    def __init__(self, capacity):
-        self.memory = deque([], maxlen=capacity)
-
-    def push(self, *args):
-        """Save a transition"""
-        self.memory.append(Transition(*args))
-
-    def sample(self, batch_size):
-        return random.sample(self.memory, batch_size)
-
-    def __len__(self):
-        return len(self.memory)
+EPSILON_START = 1
+EPSILON_END = 0.005
+EPSILON_DECAY = 100
 
 
 class Agent:
 
     def __init__(self, args: tuple):
 
-        self.lr = 0.001
-        self.epsilon = 0.01
-        self.gamma = 0.99
+        self.lr = LEARNING_RATE
+        self.epsilon = EPSILON_START
+        self.gamma = 0.8
 
         self.memory = ReplayMemory(MAX_MEMORY)
         self.model = DeepQNetwork()
@@ -57,17 +41,11 @@ class Agent:
         self.dont_save = args.dont_save
 
     def epsilon_decay(self, episode):
-        # Logarithmic decay
-        self.epsilon = 0.01 + (1 - 0.01) * (1 - math.log10((episode + 1) / 25))
-        self.epsilon = min(1, max(0.01, self.epsilon))
+        self.epsilon = (EPSILON_START - EPSILON_END) * \
+            math.exp(-1. * episode / EPSILON_DECAY)
 
     def choose_action(self, state, nb_games):
 
-        # Espilon-greedy strategy
-        # Epsilon is the probability of choosing a random action
-        # 1 - epsilon is the probability of choosing the best action
-
-        # The epsilon decreases as the number of games increases
         if not self._train:
             self.epsilon = 0
         else:
@@ -77,18 +55,9 @@ class Agent:
         prediction = self.model(state0)
 
         # Exploration vs exploitation
-
         if random.uniform(0, 1) < self.epsilon:
-
             self.choice_type = "exploration"
-
-            if self.epsilon > 0.01:
-                # Random action : action = random.randint(0, 3)
-                self.action = random.randint(0, 3)
-                return self.action
-
-            # vs. Second best action :
-            self.action = torch.argsort(prediction, descending=True)[1].item()
+            self.action = random.randint(0, 3)
             return self.action
 
         self.choice_type = "exploitation"
@@ -103,24 +72,12 @@ class Agent:
                 next_state: ndarray,
                 is_alive: bool
             ):
-        self.train_short_memory(state, action, reward, next_state, is_alive)
-        self.learn(state, action, reward, next_state, is_alive)
-
-    def learn(
-                self,
-                state: ndarray,
-                action: int,
-                reward: int,
-                next_state: ndarray,
-                is_alive: bool
-            ):
 
         if not self._train:
             return
 
         self.memory.push(state, action, reward, next_state, is_alive)
-        if len(self.memory) > MAX_MEMORY:
-            self.memory.popleft()
+        self.trainer.train_step(state, action, reward, next_state, is_alive)
 
     def train_long_memory(self):
         """
@@ -140,20 +97,6 @@ class Agent:
             self.trainer.train_step(
                 state, action, reward, next_state, is_alive
             )
-
-    def train_short_memory(
-                self,
-                state: ndarray,
-                action: int,
-                reward: int,
-                next_state: ndarray,
-                is_alive: bool
-            ):
-
-        if not self._train:
-            return
-
-        self.trainer.train_step(state, action, reward, next_state, is_alive)
 
     def save(self, scores: Score):
 

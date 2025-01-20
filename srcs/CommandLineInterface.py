@@ -111,8 +111,8 @@ class CommandLineInterface:
         lengths = []
         for i, (column_name, value) in enumerate(pandas_state.items()):
             column_name: str = column_name
-            if ('[' in column_name) and (']' in column_name):
-                continue
+            # if ('[' in column_name) and (']' in column_name):
+            #     continue
             value = f"{column_name}: {value.iloc[0]}"
             max_value_len = max(max_value_len, len(value))
             if i < len(res):

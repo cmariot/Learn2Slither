@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import torch.nn.functional as F
 
 
 class DeepQNetwork(nn.Module):
@@ -9,17 +8,16 @@ class DeepQNetwork(nn.Module):
     def __init__(self):
         super(DeepQNetwork, self).__init__()
 
-        self.input_layer = nn.Linear(160, 512)
-        self.hidden_layer_1 = nn.Linear(512, 256)
-        self.output_layer = nn.Linear(256, 4)
+        self.layers = nn.Sequential(
+            nn.Linear(144, 128),
+            nn.ReLU(),
+            nn.Linear(128, 128),
+            nn.ReLU(),
+            nn.Linear(128, 4)
+        )
 
     def forward(self, x):
-
-        x = F.relu(self.input_layer(x))
-        x = F.relu(self.hidden_layer_1(x))
-        x = self.output_layer(x)
-
-        return x
+        return self.layers(x)
 
 
 class QTrainer:

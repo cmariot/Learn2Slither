@@ -6,3 +6,4 @@
 - [PyTorch Reinforcement Learning (DQN) Tutorial](https://pytorch.org/tutorials/intermediate/reinforcement_q_learning.html)
 - [Playing Atari with Deep Reinforcement Learning](https://www.cs.toronto.edu/~vmnih/docs/dqn.pdf)
 - [How can you improve your reinforcement learning model over time?](https://www.linkedin.com/advice/1/how-can-you-improve-your-reinforcement)
+- [OpenAI Spinning Up](https://spinningup.openai.com/en/latest/index.html)
