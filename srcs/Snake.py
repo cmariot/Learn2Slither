@@ -7,6 +7,9 @@ from constants import (
 from Directions import Directions
 
 
+random.seed(0)
+
+
 class Snake:
 
     initial_snake_length = 3

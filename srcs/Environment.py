@@ -3,6 +3,10 @@ from Snake import Snake
 from constants import RED_APPLE, GREEN_APPLE, WALL, EMPTY
 
 
+# Random seed
+random.seed(0)
+
+
 class Environment:
 
     """

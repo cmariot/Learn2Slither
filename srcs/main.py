@@ -20,7 +20,8 @@ def play_step(
     controller: InterfaceController,
     gui: GraphicalUserInterface,
     cli: CommandLineInterface,
-    score: Score
+    score: Score,
+    action: int = None
 ) -> int:
 
     """
@@ -30,18 +31,7 @@ def play_step(
     and the updating of the score.
     """
 
-    gui.draw(environment, score, controller)
-
-    should_perform_move, action = gui.handle_key_pressed(
-        environment, controller, cli, score, agent
-    )
-
-    if gui.is_closed():
-        return BREAK
-    elif not should_perform_move:
-        return CONTINUE
-
-    # Get the current state
+    # Get the current state of the game
     state = interpreter.interpret(environment, controller, cli, True)
 
     if controller.is_ai():
@@ -91,10 +81,25 @@ def main(args: tuple) -> None:
 
         while GAMING_LOOP:
 
+            gui.draw(environment, score, controller)
+
+            should_perform_move, action = gui.handle_key_pressed(
+                environment, controller, cli, score, agent
+            )
+
+            if gui.is_closed():
+                break
+            elif not should_perform_move:
+                continue
+
             if play_step(
-                environment, interpreter, agent, controller, gui, cli, score
+                environment, interpreter, agent, controller,
+                gui, cli, score, action
             ) != CONTINUE:
                 break
+
+            if score.game_number % 100 == 0 and score.turn == 1:
+                agent.save(score)
 
         environment.reset()
 

@@ -1,28 +1,29 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import torch.nn.functional as F
+
+
+# PyTorch seed
+torch.manual_seed(0)
 
 
 class DeepQNetwork(nn.Module):
 
     def __init__(self):
         super(DeepQNetwork, self).__init__()
-
-        self.layers = nn.Sequential(
-            nn.Linear(144, 128),
-            nn.ReLU(),
-            nn.Linear(128, 128),
-            nn.ReLU(),
-            nn.Linear(128, 4)
-        )
+        self.input_layer = nn.Linear(16, 256)
+        self.output_layer = nn.Linear(256, 4)
 
     def forward(self, x):
-        return self.layers(x)
+        x = F.relu(self.input_layer(x))
+        x = self.output_layer(x)
+        return x
 
 
 class QTrainer:
 
-    def __init__(self, model, lr, gamma):
+    def __init__(self, model: DeepQNetwork, lr: float, gamma: float):
         self.lr = lr
         self.gamma = gamma
         self.model = model
@@ -30,21 +31,19 @@ class QTrainer:
         self.criterion = nn.MSELoss()
 
     def train_step(self, state, action, reward, next_state, game_over):
-        state = torch.tensor(state, dtype=torch.float)
-        next_state = torch.tensor(next_state, dtype=torch.float)
-        action = torch.tensor(action, dtype=torch.long)
-        reward = torch.tensor(reward, dtype=torch.float)
 
         if len(state.shape) == 1:
+            # Ajout de dimension : Utilisation de unsqueeze(0) pour ajouter une
+            # dimension supplémentaire, car les méthodes de PyTorch s'attendent
+            # souvent à des lots de données (batch).
             state = torch.unsqueeze(state, 0)
             next_state = torch.unsqueeze(next_state, 0)
             action = torch.unsqueeze(action, 0)
             reward = torch.unsqueeze(reward, 0)
 
-        prediction = self.model(state)
-        target = prediction.clone()
-        target = target.detach()
+        prediction: torch.Tensor = self.model(state)
 
+        target = prediction.clone().detach()
         if game_over:
             target[0][action] = reward
         else:

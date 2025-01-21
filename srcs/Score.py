@@ -156,7 +156,8 @@ class Score:
                 if model_directory:
                     model_directory = max(
                         [int(directory.split("_")[1])
-                         for directory in model_directory]
+                         for directory in model_directory
+                         if len(directory.split("_")) == 2]
                     )
                     model_path = os.path.join(
                         model_path, f"game_{model_directory}"

@@ -2,6 +2,8 @@ from collections import namedtuple, deque
 import random
 
 
+random.seed(0)
+
 Transition = namedtuple(
     'Transition',
     ('state', 'action', 'reward', 'next_state', 'game_over')

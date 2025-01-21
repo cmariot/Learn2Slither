@@ -7,16 +7,22 @@ from Score import Score
 from numpy import ndarray
 import math
 from ReplayMemory import ReplayMemory
+import numpy as np
 
 
-MAX_MEMORY = 200_000
-BATCH_SIZE = 10_000
+MAX_MEMORY = 500_000
+BATCH_SIZE = 500_000
 
 LEARNING_RATE = 0.001
+GAMMA = 0.9
 
 EPSILON_START = 1
-EPSILON_END = 0.005
-EPSILON_DECAY = 100
+EPSILON_END = 0.01
+EPSILON_DECAY = 200
+
+
+# Random seed
+random.seed(0)
 
 
 class Agent:
@@ -25,7 +31,7 @@ class Agent:
 
         self.lr = LEARNING_RATE
         self.epsilon = EPSILON_START
-        self.gamma = 0.8
+        self.gamma = GAMMA
 
         self.memory = ReplayMemory(MAX_MEMORY)
         self.model = DeepQNetwork()
@@ -41,15 +47,20 @@ class Agent:
         self.dont_save = args.dont_save
 
     def epsilon_decay(self, episode):
-        self.epsilon = (EPSILON_START - EPSILON_END) * \
-            math.exp(-1. * episode / EPSILON_DECAY)
-
-    def choose_action(self, state, nb_games):
 
         if not self._train:
             self.epsilon = 0
-        else:
-            self.epsilon_decay(nb_games)
+            return
+
+        self.epsilon = (EPSILON_START - EPSILON_END) * math.exp(
+            -1. * episode / EPSILON_DECAY
+        )
+
+        self.epsilon = max(EPSILON_END, self.epsilon)
+
+    def choose_action(self, state, nb_games):
+
+        self.epsilon_decay(nb_games)
 
         state0 = torch.tensor(state, dtype=torch.float)
         prediction = self.model(state0)
@@ -77,7 +88,14 @@ class Agent:
             return
 
         self.memory.push(state, action, reward, next_state, is_alive)
-        self.trainer.train_step(state, action, reward, next_state, is_alive)
+
+        self.trainer.train_step(
+            torch.tensor(state, dtype=torch.float),
+            torch.tensor(action, dtype=torch.long),
+            torch.tensor(reward, dtype=torch.float),
+            torch.tensor(next_state, dtype=torch.float),
+            is_alive
+        )
 
     def train_long_memory(self):
         """
@@ -87,16 +105,19 @@ class Agent:
         if not self._train:
             return
 
-        if len(self.memory) > BATCH_SIZE:
-            mini_sample = self.memory.sample(BATCH_SIZE)
-        else:
-            mini_sample = self.memory.sample(len(self.memory))
+        memory_len = len(self.memory)
+        batch_size = min(memory_len, BATCH_SIZE)
+        batch = self.memory.sample(batch_size)
 
-        for state, action, reward, next_state, is_alive in mini_sample:
+        states, actions, rewards, next_states, is_alive = zip(*batch)
 
-            self.trainer.train_step(
-                state, action, reward, next_state, is_alive
-            )
+        self.trainer.train_step(
+            torch.tensor(np.array(states), dtype=torch.float),
+            torch.tensor(actions, dtype=torch.long),
+            torch.tensor(rewards, dtype=torch.float),
+            torch.tensor(np.array(next_states), dtype=torch.float),
+            is_alive
+        )
 
     def save(self, scores: Score):
 
@@ -131,8 +152,16 @@ class Agent:
         if os.path.exists(model_path):
             model_directory = os.listdir(model_path)
             if model_directory:
+                to_remove = []
                 for i in range(len(model_directory)):
-                    model_directory[i] = int(model_directory[i].split("_")[1])
+                    # Check if the directory name is in the right format
+                    model_dir_array = model_directory[i].split("_")
+                    if len(model_dir_array) != 2:
+                        to_remove.append(i)
+                        continue
+                    model_directory[i] = int(model_dir_array[1])
+                for i in to_remove:
+                    model_directory.pop(i)
                 model_directory.sort()
                 model_directory = f"game_{model_directory[-1]}"
                 model_path = os.path.join(model_path, model_directory)

@@ -332,22 +332,16 @@ class GraphicalUserInterface:
         )
         self.screen.blit(score_text, (10, 10))
 
-        # Display the menu button on the screen
-        menu_text = font.render(
-            "Menu",
+        # Display the high score on the screen
+        high_score_text = font.render(
+            f"High Score: {scores.high_score}",
             True,
             (170, 215, 81)
         )
-        menu_rect = menu_text.get_rect()
         WINDOW_WIDTH = environment.width * self.CELL_SIZE
-        x = WINDOW_WIDTH - menu_rect.width - 10
+        x = WINDOW_WIDTH - high_score_text.get_width() - 10
         y = 10
-        self.screen.blit(menu_text, (x, y))
-
-        # TEST_WIDTH = high_score_text.get_width()
-        # x = WINDOW_WIDTH - TEST_WIDTH - 10
-        # y = 10
-        # self.screen.blit(high_score_text, (x, y))
+        self.screen.blit(high_score_text, (x, y))
 
         # Display the game_number on the screen (center bottom)
         game_number_text = font.render(
@@ -451,11 +445,11 @@ class GraphicalUserInterface:
         self.screen.blit(message_text, (x, y))
         pygame.display.flip()
 
-    def set_fps(self, fps):
+    def set_fps(self, fps: int):
         self.fps = fps
         self.clock.tick(self.fps)
 
-    def is_closed(self):
+    def is_closed(self) -> bool:
         """
         Return True if the pygame window is closed
         """
