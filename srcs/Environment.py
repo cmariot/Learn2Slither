@@ -117,8 +117,8 @@ class Environment:
                 if self.current_green_apples == 0:
                     return self.game_over("No more green apples, you win!")
 
-    def move_snake(self, direction):
-        direction = ['up', 'down', 'left', 'right'][direction]
+    def move_snake(self, direction: int):
+        direction: str = ['up', 'down', 'left', 'right'][direction]
         if direction in self.snake.directions:
             previous_direction = self.snake.direction
             self.snake.direction = self.snake.directions[direction]

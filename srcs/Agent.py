@@ -11,14 +11,14 @@ import numpy as np
 
 
 MAX_MEMORY = 500_000
-BATCH_SIZE = 500_000
+BATCH_SIZE = 100_000
 
 LEARNING_RATE = 0.001
-GAMMA = 0.9
+GAMMA = 0.99
 
-EPSILON_START = 1
-EPSILON_END = 0.01
-EPSILON_DECAY = 200
+EPSILON_START = 0.1
+EPSILON_END = 0.0001
+EPSILON_DECAY = 1000
 
 
 # Random seed
@@ -46,14 +46,14 @@ class Agent:
         self._train = args.train
         self.dont_save = args.dont_save
 
-    def epsilon_decay(self, episode):
+    def epsilon_decay(self, nb_games):
 
-        if not self._train:
-            self.epsilon = 0
+        if not self._train or EPSILON_DECAY == 0:
+            self.epsilon = 0.0
             return
 
         self.epsilon = (EPSILON_START - EPSILON_END) * math.exp(
-            -1. * episode / EPSILON_DECAY
+            -1.0 * nb_games / EPSILON_DECAY
         )
 
         self.epsilon = max(EPSILON_END, self.epsilon)
@@ -62,9 +62,6 @@ class Agent:
 
         self.epsilon_decay(nb_games)
 
-        state0 = torch.tensor(state, dtype=torch.float)
-        prediction = self.model(state0)
-
         # Exploration vs exploitation
         if random.uniform(0, 1) < self.epsilon:
             self.choice_type = "exploration"
@@ -72,6 +69,7 @@ class Agent:
             return self.action
 
         self.choice_type = "exploitation"
+        prediction = self.model(torch.tensor(state, dtype=torch.float))
         self.action = torch.argmax(prediction).item()
         return self.action
 
@@ -81,21 +79,22 @@ class Agent:
                 action: int,
                 reward: int,
                 next_state: ndarray,
-                is_alive: bool
+                game_over: bool
             ):
 
         if not self._train:
             return
 
-        self.memory.push(state, action, reward, next_state, is_alive)
+        # print("Training short memory")
 
         self.trainer.train_step(
-            torch.tensor(state, dtype=torch.float),
+            torch.tensor(np.array(state), dtype=torch.float),
             torch.tensor(action, dtype=torch.long),
             torch.tensor(reward, dtype=torch.float),
-            torch.tensor(next_state, dtype=torch.float),
-            is_alive
+            torch.tensor(np.array(next_state), dtype=torch.float),
+            torch.tensor(game_over, dtype=torch.float)
         )
+        self.memory.push(state, action, reward, next_state, game_over)
 
     def train_long_memory(self):
         """
@@ -105,18 +104,26 @@ class Agent:
         if not self._train:
             return
 
+        # print("Training long memory")
+
         memory_len = len(self.memory)
         batch_size = min(memory_len, BATCH_SIZE)
         batch = self.memory.sample(batch_size)
 
-        states, actions, rewards, next_states, is_alive = zip(*batch)
+        states, actions, rewards, next_states, game_over = zip(*batch)
+
+        # print("States: ", states)
+        # print("Actions: ", actions)
+        # print("Rewards: ", rewards)
+        # print("Next states: ", next_states)
+        # print("Game over: ", game_over)
 
         self.trainer.train_step(
             torch.tensor(np.array(states), dtype=torch.float),
             torch.tensor(actions, dtype=torch.long),
             torch.tensor(rewards, dtype=torch.float),
             torch.tensor(np.array(next_states), dtype=torch.float),
-            is_alive
+            torch.tensor(game_over, dtype=torch.float)
         )
 
     def save(self, scores: Score):

@@ -56,7 +56,7 @@ def play_step(
     )
 
     if environment.is_game_over:
-        gui.game_over(environment, controller)
+        # gui.game_over(environment, controller)
         agent.train_long_memory()
         score.game_over_update()
         return BREAK
@@ -87,6 +87,13 @@ def main(args: tuple) -> None:
                 environment, controller, cli, score, agent
             )
 
+            if (
+                score.game_number > 0 and
+                score.game_number % 100 == 0 and
+                score.turn == 0
+            ):
+                agent.save(score)
+
             if gui.is_closed():
                 break
             elif not should_perform_move:
@@ -98,8 +105,6 @@ def main(args: tuple) -> None:
             ) != CONTINUE:
                 break
 
-            if score.game_number % 100 == 0 and score.turn == 1:
-                agent.save(score)
 
         environment.reset()
 
