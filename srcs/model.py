@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
+import numpy as np
 
 
 # PyTorch seed
@@ -32,84 +33,112 @@ class QTrainer:
         self.optimizer = optim.Adam(model.parameters(), lr=self.lr)
         self.criterion = nn.MSELoss()
 
-    def train_step(
-            self,
-            state: torch.Tensor,
-            action: torch.Tensor,
-            reward: torch.Tensor,
-            next_state: torch.Tensor,
-            game_over: torch.Tensor
-    ) -> float:
+    def train_step(self, state, action, reward, next_state, game_over):
 
-        """
-        This method is called at each turn of the game to train the agent.
-        It's also called at the end of the game to train the agent on the
-        long memory.
-        """
-
-        # print("Train step")
-        # print("State: ", state.shape)
-        # print("Action: ", action.shape)
-        # print("Reward: ", reward.shape)
-        # print("Next state: ", next_state.shape)
-        # print("Game over: ", game_over.shape)
+        state = torch.tensor(np.array(state), dtype=torch.float)
+        next_state = torch.tensor(np.array(next_state), dtype=torch.float)
+        action = torch.tensor(action, dtype=torch.long)
+        reward = torch.tensor(reward, dtype=torch.float)
 
         if len(state.shape) == 1:
-
-            # Ajout de dimension : Utilisation de unsqueeze(0) pour ajouter une
-            # dimension supplémentaire, car les méthodes de PyTorch s'attendent
-            # souvent à des lots de données (batch).
-
-            # print("Adding dimension")
-
             state = torch.unsqueeze(state, 0)
             next_state = torch.unsqueeze(next_state, 0)
             action = torch.unsqueeze(action, 0)
             reward = torch.unsqueeze(reward, 0)
-            game_over = torch.unsqueeze(game_over, 0)
 
-            # print("NEW State: ", state)
-            # print("NEW Action: ", action)
-            # print("NEW Reward: ", reward)
-            # print("NEW Next state: ", next_state)
-            # print("NEW Game over: ", game_over)
+        prediction = self.model(state)
+        target = prediction.clone()
+        target = target.detach()
 
-        # Prediction of the Q values based on the state
-        prediction: torch.Tensor = self.model(state)
-
-        target = prediction.clone().detach()
-
-        # print("Prediction: ", prediction)
-        # print("Target: ", target)
-
-        # TODO: Pas sur du fonctionnement dans le cas de la train_long_memory,
-        # a revoir
-
-        batch_size = len(target)
-        for idx in range(batch_size):
-            # state_value = state[idx]
-            action_value = action[idx].item()
-            reward_value = reward[idx].item()
-            next_state_value = next_state[idx]
-            game_over_value = game_over[idx].item()
-
-            # print("State value: ", state_value)
-            # print("Action value: ", action_value)
-            # print("Reward value: ", reward_value)
-            # print("Next state value: ", next_state_value)
-            # print("Game over value: ", game_over_value)
-
-            if game_over_value:
-                target[idx][action_value] = reward_value
-            else:
-                target[idx][action_value] = reward_value + self.gamma * \
-                    torch.max(self.model(next_state_value))
+        if game_over:
+            target[0][action] = reward
+        else:
+            target[0][action] = reward + self.gamma * action
 
         self.optimizer.zero_grad()
         loss = self.criterion(target, prediction)
         loss.backward()
         self.optimizer.step()
-
-        # print("")
-
         return loss.item()
+
+    # def train_step(
+    #         self,
+    #         state: torch.Tensor,
+    #         action: torch.Tensor,
+    #         reward: torch.Tensor,
+    #         next_state: torch.Tensor,
+    #         game_over: torch.Tensor
+    # ) -> float:
+
+    #     """
+    #     This method is called at each turn of the game to train the agent.
+    #     It's also called at the end of the game to train the agent on the
+    #     long memory.
+    #     """
+
+    #     # print("Train step")
+    #     # print("State: ", state.shape)
+    #     # print("Action: ", action.shape)
+    #     # print("Reward: ", reward.shape)
+    #     # print("Next state: ", next_state.shape)
+    #     # print("Game over: ", game_over.shape)
+
+    #     if len(state.shape) == 1:
+
+    #         Ajout de dimension : Utilisation de unsqueeze(0) pour ajouter une
+    #         dimension supplémentaire, car les méthodes de PyTorch s'attendent
+    #         # souvent à des lots de données (batch).
+
+    #         # print("Adding dimension")
+
+    #         state = torch.unsqueeze(state, 0)
+    #         next_state = torch.unsqueeze(next_state, 0)
+    #         action = torch.unsqueeze(action, 0)
+    #         reward = torch.unsqueeze(reward, 0)
+    #         game_over = torch.unsqueeze(game_over, 0)
+
+    #         # print("NEW State: ", state)
+    #         # print("NEW Action: ", action)
+    #         # print("NEW Reward: ", reward)
+    #         # print("NEW Next state: ", next_state)
+    #         # print("NEW Game over: ", game_over)
+
+    #     # Prediction of the Q values based on the state
+    #     prediction: torch.Tensor = self.model(state)
+
+    #     target = prediction.clone().detach()
+
+    #     # print("Prediction: ", prediction)
+    #     # print("Target: ", target)
+
+    #     # Pas sur du fonctionnement dans le cas de la train_long_memory,
+    #     # a revoir
+
+    #     batch_size = len(target)
+    #     for idx in range(batch_size):
+    #         # state_value = state[idx]
+    #         action_value = action[idx].item()
+    #         reward_value = reward[idx].item()
+    #         next_state_value = next_state[idx]
+    #         game_over_value = game_over[idx].item()
+
+    #         # print("State value: ", state_value)
+    #         # print("Action value: ", action_value)
+    #         # print("Reward value: ", reward_value)
+    #         # print("Next state value: ", next_state_value)
+    #         # print("Game over value: ", game_over_value)
+
+    #         if game_over_value:
+    #             target[idx][action_value] = reward_value
+    #         else:
+    #             target[idx][action_value] = reward_value + self.gamma * \
+    #                 torch.max(self.model(next_state_value))
+
+    #     self.optimizer.zero_grad()
+    #     loss = self.criterion(target, prediction)
+    #     loss.backward()
+    #     self.optimizer.step()
+
+    #     # print("")
+
+    #     return loss.item()
