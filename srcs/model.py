@@ -42,10 +42,10 @@ class QTrainer:
         game_over: bool | tuple[bool]
     ):
 
-        state = torch.tensor(state, dtype=torch.float32)
-        action = torch.tensor(action, dtype=torch.int32)
-        reward = torch.tensor(reward, dtype=torch.float32)
-        next_state = torch.tensor(next_state, dtype=torch.float32)
+        state: torch.Tensor = torch.tensor(state, dtype=torch.float)
+        action: torch.Tensor = torch.tensor(action, dtype=torch.int)
+        reward: torch.Tensor = torch.tensor(reward, dtype=torch.float)
+        next_state: torch.Tensor = torch.tensor(next_state, dtype=torch.float)
 
         if len(state.shape) == 1:
             state = torch.unsqueeze(state, 0)

@@ -10,7 +10,7 @@ from ReplayMemory import ReplayMemory
 # import numpy as np
 
 
-MAX_MEMORY = 500_000
+MAX_MEMORY = 75_000
 BATCH_SIZE = 10_000
 
 LEARNING_RATE = 0.001
@@ -86,6 +86,14 @@ class Agent:
 
         if not self._train:
             return
+
+        # print("Training")
+        # print("Type of state: ", type(state))
+        # print("Type of action: ", type(action))
+        # print("Type of reward: ", type(reward))
+        # print("Type of next state: ", type(next_state))
+        # print("Type of game over: ", type(game_over))
+        # exit()
 
         self.trainer.train_step(state, action, reward, next_state, game_over)
         self.memory.push(state, action, reward, next_state, game_over)
