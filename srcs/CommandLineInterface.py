@@ -16,7 +16,7 @@ class CommandLineInterface:
 
     """
 
-    def __init__(self, args):
+    def __init__(self, args, environment, score, controller, interpreter):
 
         """
         Constructor of the CommandLineInterface class.
@@ -25,7 +25,7 @@ class CommandLineInterface:
         self.fps = args.fps
         self.state_str = ""
         self.new_state_str = ""
-        self.welcome_message()
+        self.print(environment, score, controller, interpreter)
 
     def welcome_message(self, scores=None):
 
@@ -49,13 +49,13 @@ class CommandLineInterface:
 
     def print(
         self, environment, scores, controller, interpreter,
-        action=None, reward=None, is_first_state=False, agent=None
+        reward=None, is_first_state=False, agent=None
     ):
 
         if controller.cli_disabled():
             return
 
-        if action is None and reward is None:
+        if reward is None:
             # Only for the first call
             interpreter.interpret(
                 environment, controller, self, is_first_state

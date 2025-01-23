@@ -205,3 +205,17 @@ class Score:
         return True if not self.training_sessions else (
             self.game_number < self.training_sessions
         )
+
+    def should_save_periodically(self, value: int) -> bool:
+
+        """
+        Return a boolean indicating if the training session is a multiple of
+        the specified value and if the game just began.
+        This method is used to save the model and the scores periodically.
+        """
+
+        return (
+            self.game_number > 0 and
+            self.game_number % value == 0 and
+            self.turn == 0
+        )

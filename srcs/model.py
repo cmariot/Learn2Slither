@@ -31,35 +31,44 @@ class QTrainer:
         self.gamma = gamma
         self.model = model
         self.optimizer = optim.Adam(model.parameters(), lr=self.lr)
-        self.criterion = nn.MSELoss()
+        self.loss = nn.MSELoss()
 
-    def train_step(self, state, action, reward, next_state, game_over):
+    def train_step(
+        self,
+        state: np.ndarray | tuple[np.ndarray],
+        action: int | tuple[int],
+        reward: float | tuple[float],
+        next_state: np.ndarray | tuple[np.ndarray],
+        game_over: bool | tuple[bool]
+    ):
 
-        state = torch.tensor(np.array(state), dtype=torch.float)
-        next_state = torch.tensor(np.array(next_state), dtype=torch.float)
-        action = torch.tensor(action, dtype=torch.long)
-        reward = torch.tensor(reward, dtype=torch.float)
+        state = torch.tensor(state)
+        action = torch.tensor(action)
+        reward = torch.tensor(reward)
+        next_state = torch.tensor(next_state)
 
         if len(state.shape) == 1:
             state = torch.unsqueeze(state, 0)
-            next_state = torch.unsqueeze(next_state, 0)
             action = torch.unsqueeze(action, 0)
             reward = torch.unsqueeze(reward, 0)
+            next_state = torch.unsqueeze(next_state, 0)
+            game_over = (game_over, )
 
-        prediction = self.model(state)
-        target = prediction.clone()
-        target = target.detach()
+        # Prediction of the Q values based on the state
+        prediction: torch.Tensor = self.model(state)
 
-        if game_over:
-            target[0][action] = reward
-        else:
-            target[0][action] = reward + self.gamma * action
+        # Update the Q value for the action taken
+        optimized_prediction = prediction.clone()
+        for i in range(len(game_over)):
+            new_Q = reward[i]
+            if not game_over[i]:
+                new_Q += self.gamma * torch.max(self.model(next_state[i]))
+            optimized_prediction[i][action[i]] = new_Q
 
+        # Update the model
         self.optimizer.zero_grad()
-        loss = self.criterion(target, prediction)
-        loss.backward()
+        self.loss(optimized_prediction, prediction).backward()
         self.optimizer.step()
-        return loss.item()
 
     # def train_step(
     #         self,

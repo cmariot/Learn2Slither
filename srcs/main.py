@@ -26,10 +26,11 @@ def play_step(
 
     """
     This function is called at each turn of the game.
-    It handles the key pressed by the user, the move of the snake,
-    the reward, the training of the agent, the game over
-    and the updating of the score.
+    It handles the training of the agent in the gaming loop.
     """
+
+    if gui.is_closed():
+        return BREAK
 
     # Get the current state of the game
     state = interpreter.interpret(environment, controller, cli, True)
@@ -50,10 +51,7 @@ def play_step(
     # Train the agent based on the new state and the reward
     agent.train(state, action, reward, new_state, environment.is_game_over)
 
-    cli.print(
-        environment, score, controller, interpreter,
-        action, reward, agent=agent
-    )
+    cli.print(environment, score, controller, interpreter, reward, agent=agent)
 
     if environment.is_game_over:
         # gui.game_over(environment, controller)
@@ -66,45 +64,42 @@ def play_step(
 
 def main(args: tuple) -> None:
 
+    """
+    Main function of Learn2Slither.
+    It initializes the environment, the interpreter, the agent,
+    the controller, the GUI, the CLI and the score.
+    It handles the training and the gaming loops.
+    """
+
     environment = Environment()
     interpreter = Interpreter()
     agent = Agent(args)
 
     controller = InterfaceController(args)
     gui = GraphicalUserInterface(environment.height, environment.width, args)
-    cli = CommandLineInterface(args)
     score = Score(args)
-
-    cli.print(environment, score, controller, interpreter)
+    cli = CommandLineInterface(
+        args, environment, score, controller, interpreter
+    )
 
     while TRAINING_LOOP and environment.is_training(gui, score):
 
-        while GAMING_LOOP:
+        while GAMING_LOOP and not gui.is_closed():
 
             gui.draw(environment, score, controller)
 
             should_perform_move, action = gui.handle_key_pressed(
-                environment, controller, cli, score, agent
-            )
+                environment, controller, cli, score, agent)
 
-            if (
-                score.game_number > 0 and
-                score.game_number % 100 == 0 and
-                score.turn == 0
-            ):
-                agent.save(score)
-
-            if gui.is_closed():
-                break
-            elif not should_perform_move:
+            if not should_perform_move:
                 continue
 
-            if play_step(
-                environment, interpreter, agent, controller,
-                gui, cli, score, action
-            ) != CONTINUE:
-                break
+            if score.should_save_periodically(100):
+                agent.save(score)
 
+            if play_step(environment, interpreter, agent, controller,
+                         gui, cli, score, action) != CONTINUE:
+                break
 
         environment.reset()
 

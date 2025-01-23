@@ -11,7 +11,7 @@ from ReplayMemory import ReplayMemory
 
 
 MAX_MEMORY = 500_000
-BATCH_SIZE = 100_000
+BATCH_SIZE = 10_000
 
 LEARNING_RATE = 0.001
 GAMMA = 0.99
@@ -102,64 +102,24 @@ class Agent:
         batch_size = min(memory_len, BATCH_SIZE)
         batch = self.memory.sample(batch_size)
 
-        for state, action, reward, next_state, is_alive in batch:
+        # C'est ici que ça plante, deplacer la boucle for dans le trainer ?
+        # states, actions, rewards, next_states, game_over = zip(*batch)
 
+        # print("States: ", states)
+        # print("Actions: ", actions)
+        # print("Rewards: ", rewards)
+        # print("Next states: ", next_states)
+        # print("Game over: ", game_over)
+        # exit()
+
+        # self.trainer.train_step(
+        #     states, actions, rewards, next_states, game_over
+        # )
+
+        for state, action, reward, next_state, is_alive in batch:
             self.trainer.train_step(
                 state, action, reward, next_state, is_alive
             )
-
-    # def train(
-    #             self,
-    #             state: ndarray,
-    #             action: int,
-    #             reward: int,
-    #             next_state: ndarray,
-    #             game_over: bool
-    #         ):
-
-    #     if not self._train:
-    #         return
-
-    #     # print("Training short memory")
-
-    #     self.trainer.train_step(
-    #         torch.tensor(np.array(state), dtype=torch.float),
-    #         torch.tensor(action, dtype=torch.long),
-    #         torch.tensor(reward, dtype=torch.float),
-    #         torch.tensor(np.array(next_state), dtype=torch.float),
-    #         torch.tensor(game_over, dtype=torch.float)
-    #     )
-    #     self.memory.push(state, action, reward, next_state, game_over)
-
-    # def train_long_memory(self):
-    #     """
-    #     experience replay mechanism
-    #     """
-
-    #     if not self._train:
-    #         return
-
-    #     # print("Training long memory")
-
-    #     memory_len = len(self.memory)
-    #     batch_size = min(memory_len, BATCH_SIZE)
-    #     batch = self.memory.sample(batch_size)
-
-    #     states, actions, rewards, next_states, game_over = zip(*batch)
-
-    #     # print("States: ", states)
-    #     # print("Actions: ", actions)
-    #     # print("Rewards: ", rewards)
-    #     # print("Next states: ", next_states)
-    #     # print("Game over: ", game_over)
-
-    #     self.trainer.train_step(
-    #         torch.tensor(np.array(states), dtype=torch.float),
-    #         torch.tensor(actions, dtype=torch.long),
-    #         torch.tensor(rewards, dtype=torch.float),
-    #         torch.tensor(np.array(next_states), dtype=torch.float),
-    #         torch.tensor(game_over, dtype=torch.float)
-    #     )
 
     def save(self, scores: Score):
 

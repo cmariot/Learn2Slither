@@ -1,0 +1,10 @@
+# TODO LIST:
+
+- [ ] Gestion des fichiers au chargement des scores / modeles (noms, permissions, etc)
+        - [ ] Fichier sans '_' dans le nom
+        - [ ] Fichier avec '_' mais sans int
+        - [ ] Fichier avec '_' et int
+        - [ ] Permissions lecture
+        - [ ] Permissions ecriture
+- [ ] Utiliser zip(*batch) dans train_long_memory
+- [ ] Train_step a revoir
