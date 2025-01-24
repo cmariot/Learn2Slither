@@ -1,13 +1,8 @@
-from collections import namedtuple, deque
+from collections import deque
 import random
 
 
 random.seed(0)
-
-Transition = namedtuple(
-    'Transition',
-    ('state', 'action', 'reward', 'next_state', 'done')
-)
 
 
 class ReplayMemory(object):
@@ -15,15 +10,14 @@ class ReplayMemory(object):
     def __init__(self, capacity):
         self.memory = deque([], maxlen=capacity)
 
-    def push(self, *args):
-        self.memory.append(Transition(*args))
+    def push(self, tuple):
+        self.memory.append(tuple)
 
-    def sample(self, batch_size) -> list[Transition]:
+    def sample(self, batch_size) -> list[tuple]:
         return random.sample(self.memory, batch_size)
 
     def __len__(self):
         return len(self.memory)
-
 
 # ########################### #
 # ********** TESTS ********** #

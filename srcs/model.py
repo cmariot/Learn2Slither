@@ -35,7 +35,7 @@ class QTrainer:
 
     def train_step(
         self,
-        states: np.ndarray,
+        states,
         actions: np.ndarray,
         rewards: np.ndarray,
         next_states: np.ndarray,
@@ -47,6 +47,13 @@ class QTrainer:
         rewards = torch.tensor(rewards, dtype=torch.float)
         next_states = torch.tensor(next_states, dtype=torch.float)
         game_overs = torch.tensor(game_overs, dtype=torch.bool)
+
+        if len(states.shape) == 1:
+            states = torch.unsqueeze(states, 0)
+            actions = torch.unsqueeze(actions, 0)
+            rewards = torch.unsqueeze(rewards, 0)
+            next_states = torch.unsqueeze(next_states, 0)
+            game_overs = torch.unsqueeze(game_overs, 0)
 
         # Prediction of the Q values based on the current state
         predictions = self.model(states)
