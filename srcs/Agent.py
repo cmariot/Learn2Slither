@@ -7,18 +7,18 @@ from Score import Score
 from numpy import ndarray
 import math
 from ReplayMemory import ReplayMemory
-# import numpy as np
+import numpy as np
 
 
-MAX_MEMORY = 75_000
-BATCH_SIZE = 10_000
+MAX_MEMORY = 500_000
+BATCH_SIZE = 4_096
 
 LEARNING_RATE = 0.001
 GAMMA = 0.99
 
 EPSILON_START = 0.1
-EPSILON_END = 0.0001
-EPSILON_DECAY = 100
+EPSILON_END = 0.005
+EPSILON_DECAY = 1000
 
 
 # Random seed
@@ -48,7 +48,7 @@ class Agent:
 
     def epsilon_decay(self, nb_games):
 
-        if not self._train or EPSILON_DECAY == 0:
+        if EPSILON_DECAY == 0:
             self.epsilon = 0.0
             return
 
@@ -87,16 +87,21 @@ class Agent:
         if not self._train:
             return
 
-        # print("Training")
-        # print("Type of state: ", type(state))
-        # print("Type of action: ", type(action))
-        # print("Type of reward: ", type(reward))
-        # print("Type of next state: ", type(next_state))
-        # print("Type of game over: ", type(game_over))
-        # exit()
-
-        self.trainer.train_step(state, action, reward, next_state, game_over)
         self.memory.push(state, action, reward, next_state, game_over)
+
+        # Train the model with a batch of data
+        memory_len = len(self.memory)
+        batch_size = min(memory_len, BATCH_SIZE)
+        batch = self.memory.sample(batch_size)
+        states, actions, rewards, next_states, game_overs = zip(*batch)
+
+        self.trainer.train_step(
+            np.array(states),
+            np.array(actions),
+            np.array(rewards),
+            np.array(next_states),
+            np.array(game_overs)
+        )
 
     def train_long_memory(self):
         """
@@ -109,25 +114,15 @@ class Agent:
         memory_len = len(self.memory)
         batch_size = min(memory_len, BATCH_SIZE)
         batch = self.memory.sample(batch_size)
+        states, actions, rewards, next_states, game_overs = zip(*batch)
 
-        # C'est ici que ça plante, deplacer la boucle for dans le trainer ?
-        # states, actions, rewards, next_states, game_over = zip(*batch)
-
-        # print("States: ", states)
-        # print("Actions: ", actions)
-        # print("Rewards: ", rewards)
-        # print("Next states: ", next_states)
-        # print("Game over: ", game_over)
-        # exit()
-
-        # self.trainer.train_step(
-        #     states, actions, rewards, next_states, game_over
-        # )
-
-        for state, action, reward, next_state, is_alive in batch:
-            self.trainer.train_step(
-                state, action, reward, next_state, is_alive
-            )
+        self.trainer.train_step(
+            np.array(states),
+            np.array(actions),
+            np.array(rewards),
+            np.array(next_states),
+            np.array(game_overs)
+        )
 
     def save(self, scores: Score):
 

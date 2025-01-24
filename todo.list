@@ -6,5 +6,16 @@
         - [ ] Fichier avec '_' et int
         - [ ] Permissions lecture
         - [ ] Permissions ecriture
-- [ ] Utiliser zip(*batch) dans train_long_memory
-- [ ] Train_step a revoir
+- [ ] Reward optimisation
+        - [ ] Se rapprocher d'une pomme
+        - [ ] S'eloigner d'une pomme
+        - [ ] Manger une pomme
+- [ ] Game loby
+        - [ ] Start
+        - [ ] Options
+        - [ ] Quit
+- [ ] Game over
+        - [ ] Score
+        - [ ] Restart
+        - [ ] Menu
+

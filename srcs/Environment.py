@@ -46,17 +46,18 @@ class Environment:
         self.snake = Snake(self)
 
         # Set the green apples on the board
+        self.green_apples = []
+        self.current_green_apples = 0
         for _ in range(self.nb_green_apples):
             self.new_apple(GREEN_APPLE)
-        self.current_green_apples = self.nb_green_apples
 
         # Set the red apples on the board
+        self.red_apples = []
+        self.current_red_apples = 0
         for _ in range(self.nb_red_apples):
             self.new_apple(RED_APPLE)
-        self.current_red_apples = self.nb_red_apples
 
         self.is_game_over = False
-
         self.game_over_message = ""
 
     def reset(self):
@@ -79,14 +80,16 @@ class Environment:
         self.snake = Snake(self)
 
         # Set the green apples on the board
+        self.green_apples = []
+        self.current_green_apples = 0
         for _ in range(self.nb_green_apples):
             self.new_apple(GREEN_APPLE)
-        self.current_green_apples = self.nb_green_apples
 
         # Set the red apples on the board
+        self.red_apples = []
+        self.current_red_apples = 0
         for _ in range(self.nb_red_apples):
             self.new_apple(RED_APPLE)
-        self.current_red_apples = self.nb_red_apples
 
         self.is_game_over = False
 
@@ -108,14 +111,30 @@ class Environment:
         x, y = self.get_random_empty_cell()
         if x is not None and y is not None:
             self.board[x][y] = apple
+            if apple == RED_APPLE:
+                self.red_apples.append((x, y))
+                self.current_red_apples += 1
+            elif apple == GREEN_APPLE:
+                self.green_apples.append((x, y))
+                self.current_green_apples += 1
         else:
             if apple == RED_APPLE:
                 self.current_red_apples -= 1
-                return self.game_over("Can't place a new red apple")
+                self.game_over("Can't place a new red apple")
             elif apple == GREEN_APPLE:
                 self.current_green_apples -= 1
                 if self.current_green_apples == 0:
-                    return self.game_over("No more green apples, you win!")
+                    self.game_over("No more green apples, you win!")
+
+    def eat_apple(self, apple, new_head):
+        if apple == RED_APPLE:
+            self.red_apples.remove(new_head)
+            self.current_red_apples -= 1
+        elif apple == GREEN_APPLE:
+            self.green_apples.remove(new_head)
+            self.current_green_apples -= 1
+            if self.current_green_apples == 0:
+                self.game_over("No more green apples, you win!")
 
     def move_snake(self, direction: int):
         direction: str = ['up', 'down', 'left', 'right'][direction]

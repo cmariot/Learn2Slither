@@ -65,6 +65,13 @@ class CommandLineInterface:
         self.print_env_state()
         self.print_action(agent, reward, controller.is_ai())
         self.print_env_state(is_new_state=True)
+
+        # Print the apple position
+        for green_apple in environment.green_apples:
+            print(f"Green apple: {green_apple}")
+        for red_apple in environment.red_apples:
+            print(f"Red apple: {red_apple}")
+
         self.print_game_over(environment)
 
         if controller.gui_disabled():

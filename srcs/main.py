@@ -54,7 +54,7 @@ def play_step(
     cli.print(environment, score, controller, interpreter, reward, agent=agent)
 
     if environment.is_game_over:
-        # gui.game_over(environment, controller)
+        gui.game_over(environment, controller)
         agent.train_long_memory()
         score.game_over_update()
         return BREAK
@@ -81,6 +81,8 @@ def main(args: tuple) -> None:
     cli = CommandLineInterface(
         args, environment, score, controller, interpreter
     )
+
+    controller.toggle_cli()
 
     while TRAINING_LOOP and environment.is_training(gui, score):
 

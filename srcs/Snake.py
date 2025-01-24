@@ -15,12 +15,12 @@ class Snake:
     initial_snake_length = 3
     directions = Directions().get_directions()
 
-    def __init__(self, board):
+    def __init__(self, environment):
 
         all_positions = {
             (x, y)
-            for x in range(1, board.width - 1)
-            for y in range(1, board.height - 1)
+            for x in range(1, environment.width - 1)
+            for y in range(1, environment.height - 1)
         }
 
         is_first_body_part = True
@@ -69,64 +69,66 @@ class Snake:
                 break
 
         self.body = body
-        self.board_width = board.width - 2
+        self.environment_width = environment.width - 2
 
-        # Set the snake on the board
+        # Set the snake on the environment
         for x, y in self.body:
-            board.board[x][y] = SNAKE_BODY
+            environment[x][y] = SNAKE_BODY
         x, y = self.get_head_position()
-        board.board[x][y] = SNAKE_HEAD
+        environment[x][y] = SNAKE_HEAD
 
-    def move(self, board):
+    def move(self, environment):
         head_x, head_y = self.get_head_position()
         dir_x, dir_y = self.direction
         new_head = (head_x + dir_x, head_y + dir_y)
-        next_cell = board[new_head[0]][new_head[1]]
+        next_cell = environment[new_head[0]][new_head[1]]
         if next_cell == WALL:
             return self.die("Snake hit the wall")
         elif next_cell == SNAKE_BODY:
             return self.die("Snake collision")
         elif next_cell == RED_APPLE:
-            return self.shrink(board, new_head)
+            return self.shrink(environment, new_head)
         elif next_cell == GREEN_APPLE:
-            return self.grow(board, new_head)
+            return self.grow(environment, new_head)
         elif next_cell == EMPTY:
-            return self.move_forward(board, new_head)
+            return self.move_forward(environment, new_head)
 
-    def move_forward(self, board, new_head):
+    def move_forward(self, environment, new_head):
         x, y = new_head
-        board[x][y] = SNAKE_HEAD
+        environment[x][y] = SNAKE_HEAD
         x, y = self.get_head_position()
-        board[x][y] = SNAKE_BODY
+        environment[x][y] = SNAKE_BODY
         x, y = self.body[-1]
-        board[x][y] = EMPTY
+        environment[x][y] = EMPTY
         self.body = [new_head] + self.body[:-1]
         return False, SMALLLER_NEGATIVE_REWARD, "Snake moved forward"
 
-    def grow(self, board, new_head):
+    def grow(self, environment, new_head):
         # Green apple : grow the snake and add a new Green apple
         x, y = new_head
-        board[x][y] = SNAKE_HEAD
+        environment[x][y] = SNAKE_HEAD
         x, y = self.get_head_position()
-        board[x][y] = SNAKE_BODY
+        environment[x][y] = SNAKE_BODY
         self.body = [new_head] + self.body
-        board.new_apple(GREEN_APPLE)
+        environment.eat_apple(GREEN_APPLE, new_head)
+        environment.new_apple(GREEN_APPLE)
         return False, POSITIVE_REWARD, "Snake grew up by eating a green apple"
 
-    def shrink(self, board, new_head):
+    def shrink(self, environment, new_head):
         x, y = new_head
         if len(self.body) == 1:
             return self.die("Snake has no more body")
-        board[x][y] = SNAKE_HEAD
+        environment[x][y] = SNAKE_HEAD
         if len(self.body) > 2:
             x, y = self.get_head_position()
-            board[x][y] = SNAKE_BODY
+            environment[x][y] = SNAKE_BODY
         x, y = self.body[-2]
-        board[x][y] = EMPTY
+        environment[x][y] = EMPTY
         x, y = self.body[-1]
-        board[x][y] = EMPTY
+        environment[x][y] = EMPTY
         self.body = [new_head] + self.body[:-2]
-        board.new_apple(RED_APPLE)
+        environment.eat_apple(RED_APPLE, new_head)
+        environment.new_apple(RED_APPLE)
         return False, NEGATIVE_REWARD, "Snake shrunk by eating a red apple"
 
     def die(self, message):
