@@ -87,11 +87,11 @@ class Agent:
         if not self._train:
             return
 
-        state = torch.tensor(np.array(state), dtype=torch.float)
-        action = torch.tensor(action, dtype=torch.int)
-        reward = torch.tensor(reward, dtype=torch.float)
-        next_state = torch.tensor(np.array(next_state), dtype=torch.float)
-        game_over = torch.tensor(game_over, dtype=torch.bool)
+        state = torch.tensor(np.array(state), dtype=torch.float).unsqueeze(0)
+        action = torch.tensor(action, dtype=torch.int).unsqueeze(0)
+        reward = torch.tensor(reward, dtype=torch.float).unsqueeze(0)
+        next_state = torch.tensor(np.array(next_state), dtype=torch.float).unsqueeze(0)
+        game_over = torch.tensor(game_over, dtype=torch.bool).unsqueeze(0)
 
         self.trainer.train_step(
             state,
