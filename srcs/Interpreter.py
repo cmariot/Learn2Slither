@@ -50,6 +50,8 @@ class Interpreter:
             dictionary[f'danger_{key}'] = danger
             dictionary[f'wall_{key}'] = wall
 
+        dictionary['board_size'] = len(state) - 2
+
         dictionary = dict(sorted(dictionary.items()))
 
         # x_list = []

@@ -7,18 +7,18 @@ from Score import Score
 from numpy import ndarray
 import math
 from ReplayMemory import ReplayMemory
-# import numpy as np
+import numpy as np
 
 
-MAX_MEMORY = 75_000
-BATCH_SIZE = 10_000
+MAX_MEMORY = 500_000
+BATCH_SIZE = 128
 
-LEARNING_RATE = 0.001
+LEARNING_RATE = 10e-4
 GAMMA = 0.99
 
 EPSILON_START = 0.1
-EPSILON_END = 0.0001
-EPSILON_DECAY = 100
+EPSILON_END = 0.001
+EPSILON_DECAY = 1000
 
 
 # Random seed
@@ -83,24 +83,29 @@ class Agent:
         next_state: ndarray,
         game_over: bool
     ):
-
+        """
+        Trains the model on a single experience and adds it to memory.
+        """
         if not self._train:
             return
 
-        # print("Training")
-        # print("Type of state: ", type(state))
-        # print("Type of action: ", type(action))
-        # print("Type of reward: ", type(reward))
-        # print("Type of next state: ", type(next_state))
-        # print("Type of game over: ", type(game_over))
-        # exit()
+        # Entraînement sur une seule expérience
+        self.trainer.train_step(
+            torch.tensor(state, dtype=torch.float).unsqueeze(0),
+            torch.tensor([action], dtype=torch.long),
+            torch.tensor([reward], dtype=torch.float),
+            torch.tensor(next_state, dtype=torch.float).unsqueeze(0),
+            torch.tensor([game_over], dtype=torch.bool)
+        )
 
-        self.trainer.train_step(state, action, reward, next_state, game_over)
-        self.memory.push(state, action, reward, next_state, game_over)
+        # Ajout de l'expérience dans la mémoire
+        self.memory.push((state, action, reward, next_state, game_over))
 
     def train_long_memory(self):
+
         """
-        experience replay mechanism
+        Experience replay mechanism: trains the model on a batch of past
+        experiences.
         """
 
         if not self._train:
@@ -108,26 +113,19 @@ class Agent:
 
         memory_len = len(self.memory)
         batch_size = min(memory_len, BATCH_SIZE)
+
+        # Échantillonner un batch aléatoire
         batch = self.memory.sample(batch_size)
+        states, actions, rewards, next_states, game_over = zip(*batch)
 
-        # C'est ici que ça plante, deplacer la boucle for dans le trainer ?
-        # states, actions, rewards, next_states, game_over = zip(*batch)
-
-        # print("States: ", states)
-        # print("Actions: ", actions)
-        # print("Rewards: ", rewards)
-        # print("Next states: ", next_states)
-        # print("Game over: ", game_over)
-        # exit()
-
-        # self.trainer.train_step(
-        #     states, actions, rewards, next_states, game_over
-        # )
-
-        for state, action, reward, next_state, is_alive in batch:
-            self.trainer.train_step(
-                state, action, reward, next_state, is_alive
-            )
+        # Entraîner le modèle sur le batch
+        self.trainer.train_step(
+            torch.tensor(np.array(states), dtype=torch.float),
+            torch.tensor(np.array(actions), dtype=torch.long),
+            torch.tensor(np.array(rewards), dtype=torch.float),
+            torch.tensor(np.array(next_states), dtype=torch.float),
+            torch.tensor(np.array(game_over), dtype=torch.bool)
+        )
 
     def save(self, scores: Score):
 
