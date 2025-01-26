@@ -12,7 +12,7 @@ class DeepQNetwork(nn.Module):
 
     def __init__(self):
         super(DeepQNetwork, self).__init__()
-        self.input_layer = nn.Linear(17, 256)
+        self.input_layer = nn.Linear(16, 256)
         self.hidden_layer = nn.Linear(256, 256)
         self.output_layer = nn.Linear(256, 4)
 
@@ -68,5 +68,5 @@ class QTrainer:
         self.optimizer.zero_grad()
         loss = self.loss.forward(action_q_values, target_q_values)
         loss.backward()
-        nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
+        # nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
         self.optimizer.step()

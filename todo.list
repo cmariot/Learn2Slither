@@ -6,5 +6,11 @@
         - [ ] Fichier avec '_' et int
         - [ ] Permissions lecture
         - [ ] Permissions ecriture
-- [ ] Utiliser zip(*batch) dans train_long_memory
-- [ ] Train_step a revoir
+        - [ ] File not found
+        - [ ] Fichier vide
+        - [ ] Fichier avec des lignes vides
+
+ - [ ] Loby, menu, etc
+		- [ ] Menu principal
+		- [ ] Menu de selection de mode de jeu
+		- [ ] Menu de selection de modele

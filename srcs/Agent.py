@@ -48,7 +48,7 @@ class Agent:
 
     def epsilon_decay(self, nb_games):
 
-        if not self._train or EPSILON_DECAY == 0:
+        if EPSILON_DECAY == 0:
             self.epsilon = 0.0
             return
 
@@ -111,11 +111,11 @@ class Agent:
         if not self._train:
             return
 
+        # Échantillonner un batch aléatoire
         memory_len = len(self.memory)
         batch_size = min(memory_len, BATCH_SIZE)
-
-        # Échantillonner un batch aléatoire
         batch = self.memory.sample(batch_size)
+
         states, actions, rewards, next_states, game_over = zip(*batch)
 
         # Entraîner le modèle sur le batch

@@ -94,7 +94,7 @@ def main(args: tuple) -> None:
             if not should_perform_move:
                 continue
 
-            if score.should_save_periodically(100):
+            if score.should_save_periodically(1000):
                 agent.save(score)
 
             if play_step(environment, interpreter, agent, controller,

@@ -91,7 +91,21 @@ class Snake:
         elif next_cell == GREEN_APPLE:
             return self.grow(board, new_head)
         elif next_cell == EMPTY:
-            return self.move_forward(board, new_head)
+            game_over, reward, game_over_msg = \
+                  self.move_forward(board, new_head)
+            # If the snake is moving in a GREEN_APPLE direction POSITIVE_REWARD
+            green_apple_distance = self.board_width
+            wall_distance = 0
+            for i in range(1, self.board_width):
+                next_cell = board[head_x + i * dir_x][head_y + i * dir_y]
+                if next_cell == WALL:
+                    wall_distance = i - 1
+                    break
+                elif next_cell == GREEN_APPLE:
+                    green_apple_distance = i - 1
+            if green_apple_distance < wall_distance:
+                reward *= -1
+            return game_over, reward, game_over_msg
 
     def move_forward(self, board, new_head):
         x, y = new_head
