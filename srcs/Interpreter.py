@@ -4,10 +4,7 @@ from pandas import DataFrame
 from CommandLineInterface import CommandLineInterface
 from InterfaceController import InterfaceController
 from Directions import Directions
-from constants import (
-    WALL, GREEN_APPLE, RED_APPLE, SNAKE_BODY,
-    # SNAKE_HEAD, EMPTY
-)
+from constants import WALL, GREEN_APPLE, RED_APPLE, SNAKE_BODY
 
 
 class Interpreter:
@@ -102,7 +99,7 @@ class Interpreter:
             y += direction[1]
         if state[y][x] == WALL:
             return 0
-        return distance
+        return distance / (state_len - 2)
 
     def _danger_distance(self, state, x, y, direction, no_snake_body):
 
@@ -123,7 +120,7 @@ class Interpreter:
             distance += 1
             x += direction[0]
             y += direction[1]
-        return distance
+        return distance / (state_len - 2)
 
     def _wall_distance(self, state, x, y, direction):
 
@@ -141,7 +138,7 @@ class Interpreter:
             distance += 1
             x += direction[0]
             y += direction[1]
-        return distance
+        return distance / (state_len - 2)
 
     def _have_snake_body(self, state, x, y, direction):
 

@@ -7,9 +7,7 @@
         - [ ] Permissions lecture
         - [ ] Permissions ecriture
 - [ ] Reward optimisation
-        - [ ] Se rapprocher d'une pomme
         - [ ] S'eloigner d'une pomme
-        - [ ] Manger une pomme
 - [ ] Game loby
         - [ ] Start
         - [ ] Options
@@ -19,3 +17,6 @@
         - [ ] Restart
         - [ ] Menu
 
+        - [ ] File not found
+        - [ ] Fichier vide
+        - [ ] Fichier avec des lignes vides

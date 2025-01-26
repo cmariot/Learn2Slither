@@ -11,9 +11,9 @@ import numpy as np
 
 
 MAX_MEMORY = 500_000
-BATCH_SIZE = 4_096
+BATCH_SIZE = 1_024
 
-LEARNING_RATE = 0.001
+LEARNING_RATE = 10e-4
 GAMMA = 0.99
 
 EPSILON_START = 0.1
@@ -83,23 +83,22 @@ class Agent:
         next_state: ndarray,
         game_over: bool
     ):
-
+        """
+        Trains the model on a single experience and adds it to memory.
+        """
         if not self._train:
             return
 
-        state = torch.tensor(np.array(state), dtype=torch.float).unsqueeze(0)
-        action = torch.tensor(action, dtype=torch.int).unsqueeze(0)
-        reward = torch.tensor(reward, dtype=torch.float).unsqueeze(0)
-        next_state = torch.tensor(np.array(next_state), dtype=torch.float).unsqueeze(0)
-        game_over = torch.tensor(game_over, dtype=torch.bool).unsqueeze(0)
-
+        # Entraînement sur une seule expérience
         self.trainer.train_step(
-            state,
-            action,
-            reward,
-            next_state,
-            game_over
+            torch.tensor(state, dtype=torch.float).unsqueeze(0),
+            torch.tensor([action], dtype=torch.long),
+            torch.tensor([reward], dtype=torch.float),
+            torch.tensor(next_state, dtype=torch.float).unsqueeze(0),
+            torch.tensor([game_over], dtype=torch.bool)
         )
+
+        # Ajout de l'expérience dans la mémoire
         self.memory.push((state, action, reward, next_state, game_over))
 
     def train_long_memory(self):
@@ -112,6 +111,7 @@ class Agent:
         if not self._train:
             return
 
+        # Échantillonner un batch aléatoire
         memory_len = len(self.memory)
         batch_size = min(memory_len, BATCH_SIZE)
 
@@ -119,16 +119,15 @@ class Agent:
         batch = self.memory.sample(batch_size)
         states, actions, rewards, next_states, game_over = zip(*batch)
 
-        # Convertir les batchs en tenseurs
-        states = torch.tensor(np.array(states), dtype=torch.float)
-        actions = torch.tensor(np.array(actions), dtype=torch.int)
-        rewards = torch.tensor(np.array(rewards), dtype=torch.float)
-        next_states = torch.tensor(np.array(next_states), dtype=torch.float)
-        game_over = torch.tensor(np.array(game_over), dtype=torch.bool)
+        states, actions, rewards, next_states, game_over = zip(*batch)
 
         # Entraîner le modèle sur le batch
         self.trainer.train_step(
-            states, actions, rewards, next_states, game_over
+            torch.tensor(np.array(states), dtype=torch.float),
+            torch.tensor(np.array(actions), dtype=torch.long),
+            torch.tensor(np.array(rewards), dtype=torch.float),
+            torch.tensor(np.array(next_states), dtype=torch.float),
+            torch.tensor(np.array(game_over), dtype=torch.bool)
         )
 
     def save(self, scores: Score):

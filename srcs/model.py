@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
-import numpy as np
 
 
 # PyTorch seed
@@ -14,8 +13,8 @@ class DeepQNetwork(nn.Module):
     def __init__(self):
         super(DeepQNetwork, self).__init__()
         self.input_layer = nn.Linear(16, 256)
-        self.hidden_layer = nn.Linear(256, 64)
-        self.output_layer = nn.Linear(64, 4)
+        self.hidden_layer = nn.Linear(256, 256)
+        self.output_layer = nn.Linear(256, 4)
 
     def forward(self, x):
         x = F.relu(self.input_layer(x))
@@ -35,35 +34,28 @@ class QTrainer:
 
     def train_step(
         self,
-        states,
-        actions: np.ndarray,
-        rewards: np.ndarray,
-        next_states: np.ndarray,
-        game_overs: np.ndarray
+        states: torch.Tensor,
+        actions: torch.Tensor,
+        rewards: torch.Tensor,
+        next_states: torch.Tensor,
+        game_overs: torch.Tensor
     ):
-
-        # states = torch.tensor(states, dtype=torch.float)
-        # actions = torch.tensor(actions, dtype=torch.long)
-        # rewards = torch.tensor(rewards, dtype=torch.float)
-        # next_states = torch.tensor(next_states, dtype=torch.float)
-        # game_overs = torch.tensor(game_overs, dtype=torch.bool)
-
-        # if len(states.shape) == 1:
-        #     states = torch.unsqueeze(states, 0)
-        #     actions = torch.unsqueeze(actions, 0)
-        #     rewards = torch.unsqueeze(rewards, 0)
-        #     next_states = torch.unsqueeze(next_states, 0)
-        #     game_overs = torch.unsqueeze(game_overs, 0)
+        """
+        Performs a training step on a batch or a single experience.
+        """
 
         # Prediction of the Q values based on the current state
         predictions = self.model(states)
 
-        # Prediction of the Q values for the next state
-        next_predictions = self.model(next_states)
-
         with torch.no_grad():
+
+            # Prediction of the Q values for the next state
+            next_predictions = self.model(next_states)
+
             # Get the maximum Q value for the next state
             max_next_q_values = torch.max(next_predictions, dim=1)[0]
+
+            # Compute the target Q values
             target_q_values = \
                 rewards + (self.gamma * max_next_q_values * (~game_overs))
 
