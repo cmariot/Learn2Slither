@@ -14,6 +14,8 @@ class GraphicalUserInterface:
     def __init__(self, board_width, board_height, args):
         pygame.init()
         self.clock = pygame.time.Clock()
+        self.board_width = board_width
+        self.board_height = board_height
         self.window_width = board_width * self.CELL_SIZE
         self.window_height = board_height * self.CELL_SIZE
         self.screen = pygame.display.set_mode(
@@ -454,3 +456,122 @@ class GraphicalUserInterface:
         Return True if the pygame window is closed
         """
         return self._is_closed
+
+    def lobby(self):
+
+        # Display the lobby screen
+        self.screen.fill((0, 0, 0))
+
+        for y in range(self.board_height):
+            for x in range(self.board_width):
+                if (x + y) % 2 == 0:
+                    cell_color = (170, 215, 81)
+                else:
+                    cell_color = (162, 209, 73)
+
+                if (
+                    x == 0 or x == self.board_width - 1 or
+                    y == 0 or y == self.board_height - 1
+                ):
+                    cell_color = (87, 138, 52)
+
+                pygame.draw.rect(
+                    self.screen,
+                    cell_color,
+                    (
+                        x * self.CELL_SIZE, y * self.CELL_SIZE,
+                        self.CELL_SIZE, self.CELL_SIZE
+                    )
+                )
+
+        # Display the title of the game
+        font = pygame.font.Font(self.font, 36)
+        title = font.render(
+            "Learn2Slither",
+            True,
+            (87, 138, 52)
+        )
+
+        font = pygame.font.Font(self.font, 24)
+        start = font.render(
+            "Start",
+            True,
+            (87, 138, 52)
+        )
+
+        button_border = pygame.Surface((150, 50))
+        button_border.fill((87, 138, 52))
+
+        button = pygame.Surface((146, 46))
+        button.fill((170, 215, 81))
+
+        font = pygame.font.Font(self.font, 24)
+        settings = font.render(
+            "Settings",
+            True,
+            (87, 138, 52)
+        )
+        # x = (self.screen.get_width() - settings.get_width()) / 2
+        # y += button.get_height() / 2 - settings.get_height() / 2
+        # self.screen.blit(settings, (x, y))
+
+        elements = [
+            {
+                "id": 0,
+                "element": title,
+                "x": 0,
+                "y": 0
+            },
+            {
+                "id": 1,
+                "element": button_border,
+                "x": 0,
+                "y": button_border.get_height() + 10
+            },
+            {
+                "id": 2,
+                "element": button,
+                "x": 2,
+                "y": 2
+            },
+            {
+                "id": 3,
+                "element": start,
+                "x": 0,
+                "y": button_border.get_height() / 2 -
+                1 - start.get_height() / 2
+            },
+            {
+                "id": 4,
+                "element": button_border,
+                "x": 0,
+                "y": button_border.get_height() + 10
+            },
+            {
+                "id": 5,
+                "element": button,
+                "x": 2,
+                "y": 2
+            },
+            {
+                "id": 6,
+                "element": settings,
+                "x": 0,
+                "y": button_border.get_height() / 2 - 1 -
+                settings.get_height() / 2
+            }
+        ]
+
+        elements_height = title.get_height() + \
+            2 * (button_border.get_height() + 10)
+
+        x = (self.screen.get_width() - title.get_width()) / 2
+        y = (self.screen.get_height() - elements_height) / 2
+
+        for element in elements:
+            x = (self.screen.get_width() - element["element"].get_width()) / 2
+            y += element["y"]
+            self.screen.blit(element["element"], (x, y))
+
+        pygame.display.flip()
+        self.clock.tick(self.fps)

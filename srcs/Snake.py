@@ -94,9 +94,9 @@ class Snake:
             game_over, reward, game_over_msg = \
                   self.move_forward(environment, new_head)
             # If the snake is moving in a GREEN_APPLE direction POSITIVE_REWARD
-            green_apple_distance = self.board_width
+            green_apple_distance = self.environment_width
             wall_distance = 0
-            for i in range(1, self.board_width):
+            for i in range(1, self.environment_width):
                 next_cell = environment[head_x + i * dir_x][head_y + i * dir_y]
                 if next_cell == WALL:
                     wall_distance = i - 1

@@ -70,6 +70,15 @@ class ArgumentParser:
             help="Do not train the model."
         )
 
+        # Board size
+        self.parser.add_argument(
+            "--board-size",
+            type=int,
+            default=10,
+            help="Size of the board.",
+            action=self.IsPositiveCondition
+        )
+
     def parse_args(self):
 
         """

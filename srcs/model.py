@@ -45,7 +45,9 @@ class QTrainer:
         """
 
         # Prediction of the Q values based on the current state
-        predictions = self.model(states)
+        predictions: torch.Tensor = self.model(states)
+        action_q_values = \
+            predictions.gather(1, actions.unsqueeze(-1)).squeeze(-1)
 
         with torch.no_grad():
 
@@ -58,10 +60,6 @@ class QTrainer:
             # Compute the target Q values
             target_q_values = \
                 rewards + (self.gamma * max_next_q_values * (~game_overs))
-
-        # Gather the Q values corresponding to the actions taken
-        action_q_values = \
-            predictions.gather(1, actions.unsqueeze(-1)).squeeze(-1)
 
         # Update the model
         self.optimizer.zero_grad()

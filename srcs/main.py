@@ -12,6 +12,29 @@ from constants import TRAINING_LOOP, GAMING_LOOP
 CONTINUE = 0
 BREAK = 1
 
+import pygame
+
+def game_lobby(
+    environment: Environment,
+    controller: InterfaceController,
+    gui: GraphicalUserInterface,
+    score: Score
+) -> None:
+
+    while not controller.is_ai() and not gui.is_closed():
+
+        gui.lobby()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return gui.close()
+            elif event.type == pygame.KEYDOWN:
+                key = pygame.key.name(event.key)
+                if (key == "q" or key == "escape"):
+                    gui.close()
+                elif key == "space":
+                    return
+
 
 def play_step(
     environment: Environment,
@@ -71,7 +94,7 @@ def main(args: tuple) -> None:
     It handles the training and the gaming loops.
     """
 
-    environment = Environment()
+    environment = Environment(args)
     interpreter = Interpreter()
     agent = Agent(args)
 
@@ -82,7 +105,7 @@ def main(args: tuple) -> None:
         args, environment, score, controller, interpreter
     )
 
-    controller.toggle_cli()
+    game_lobby(environment, controller, gui, score)
 
     while TRAINING_LOOP and environment.is_training(gui, score):
 

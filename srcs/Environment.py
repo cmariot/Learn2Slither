@@ -17,10 +17,9 @@ class Environment:
     nb_red_apples = 1
     nb_green_apples = 2
 
-    GRID_SIZE = 10
-    width = height = GRID_SIZE + 2
+    def __init__(self, args: tuple):
 
-    def __init__(self):
+        self.width = self.height = args.board_size + 2
 
         # Create the board with all cells set to 0 and walls around
         self.board = [

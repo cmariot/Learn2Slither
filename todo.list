@@ -6,8 +6,9 @@
         - [ ] Fichier avec '_' et int
         - [ ] Permissions lecture
         - [ ] Permissions ecriture
-- [ ] Reward optimisation
-        - [ ] S'eloigner d'une pomme
+        - [ ] File not found
+        - [ ] Fichier vide
+        - [ ] Fichier avec des lignes vides
 - [ ] Game loby
         - [ ] Start
         - [ ] Options
@@ -17,6 +18,3 @@
         - [ ] Restart
         - [ ] Menu
 
-        - [ ] File not found
-        - [ ] Fichier vide
-        - [ ] Fichier avec des lignes vides
