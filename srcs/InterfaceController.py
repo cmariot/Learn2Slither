@@ -3,7 +3,7 @@ class InterfaceController:
     def __init__(
                 self,
                 args: tuple,
-                is_ai: bool = False,
+                is_ai: bool = True,
                 cli_enabled: bool = True,
                 gui_enabled: bool = True
             ):
@@ -33,10 +33,10 @@ class InterfaceController:
         self.gui_enabled = not self.gui_enabled
         if self.gui_enabled:
             print("GUI enabled")
-            gui.draw(environment, scores, self)
+            gui.game.draw(environment, scores, self)
         else:
             print("GUI disabled")
-            gui.disable()
+            gui.game.disable(gui)
 
     def is_ai(self):
         return self.ai_enabled

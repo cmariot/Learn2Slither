@@ -8,32 +8,8 @@ from Score import Score
 from ArgumentParser import ArgumentParser
 from constants import TRAINING_LOOP, GAMING_LOOP
 
-
 CONTINUE = 0
 BREAK = 1
-
-import pygame
-
-def game_lobby(
-    environment: Environment,
-    controller: InterfaceController,
-    gui: GraphicalUserInterface,
-    score: Score
-) -> None:
-
-    while not controller.is_ai() and not gui.is_closed():
-
-        gui.lobby()
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                return gui.close()
-            elif event.type == pygame.KEYDOWN:
-                key = pygame.key.name(event.key)
-                if (key == "q" or key == "escape"):
-                    gui.close()
-                elif key == "space":
-                    return
 
 
 def play_step(
@@ -77,12 +53,40 @@ def play_step(
     cli.print(environment, score, controller, interpreter, reward, agent=agent)
 
     if environment.is_game_over:
-        gui.game_over(environment, controller)
+        gui.game.game_over(environment, controller, gui)
         agent.train_long_memory()
         score.game_over_update()
         return BREAK
 
     return CONTINUE
+
+
+def game(
+        environment: Environment,
+        controller: InterfaceController,
+        gui: GraphicalUserInterface,
+        score: Score,
+        agent: Agent,
+        interpreter: Interpreter,
+        cli
+) -> None:
+
+    while TRAINING_LOOP and environment.is_training(gui, score):
+        while GAMING_LOOP and not gui.is_closed():
+            gui.game.draw(environment, score, controller)
+            should_perform_move, action = gui.handle_key_pressed(
+                environment, controller, cli, score, agent)
+            if not should_perform_move:
+                continue
+            if score.should_save_periodically(1000):
+                agent.save(score)
+            if play_step(
+                environment, interpreter, agent, controller,
+                gui, cli, score, action
+            ) != CONTINUE:
+                break
+        environment.reset()
+    agent.save(score)
 
 
 def main(args: tuple) -> None:
@@ -105,30 +109,24 @@ def main(args: tuple) -> None:
         args, environment, score, controller, interpreter
     )
 
-    game_lobby(environment, controller, gui, score)
+    while True:
 
-    while TRAINING_LOOP and environment.is_training(gui, score):
-
-        while GAMING_LOOP and not gui.is_closed():
-
-            gui.draw(environment, score, controller)
-
-            should_perform_move, action = gui.handle_key_pressed(
-                environment, controller, cli, score, agent)
-
-            if not should_perform_move:
-                continue
-
-            if score.should_save_periodically(1000):
-                agent.save(score)
-
-            if play_step(environment, interpreter, agent, controller,
-                         gui, cli, score, action) != CONTINUE:
+        if gui.state == "MENU":
+            gui.menu.draw_menu()
+            if gui.menu.handle_menu_events(gui) == "EXIT":
                 break
-
-        environment.reset()
-
-    agent.save(score)
+        elif gui.state == "GAME":
+            game(environment, controller, gui, score, agent, interpreter, cli)
+            break
+        elif gui.state == "SETTINGS":
+            # gui.draw_settings()
+            # gui.handle_settings_events()
+            pass
+        elif gui.state == "EXIT":
+            break
+        else:
+            print(f"GUI.State: {gui.state}")
+            break
 
 
 if __name__ == "__main__":

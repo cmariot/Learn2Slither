@@ -20,6 +20,7 @@ class Score:
 
         self.score = 0              # Current score
         self.game_number = 0        # Current game number, +1 at each game
+        self.initial_game_number = 0  # Initial game number
         self.turn = 0               # Current turn number, +1 at each turn
         self.snake_len = 0          # Current snake length
         self.max_snake_len = 0      # Max snake length of the current game
@@ -35,6 +36,8 @@ class Score:
         if not args.new_model:
             self.load_scores(args.model_path)
 
+        self.initial_game_number = self.game_number
+
         self.high_score = int(max(self.scores, default=0))
 
         self.training_sessions = 0
@@ -42,6 +45,24 @@ class Score:
             self.training_sessions = self.game_number + args.training_sessions
 
         plt.switch_backend("agg")
+
+    # Desturctor
+    def __del__(self):
+
+        nb_of_games = self.game_number - self.initial_game_number
+
+        if nb_of_games == 0:
+            return
+
+        max_snake_len = max(self.max_snake_lengths[self.initial_game_number:],
+                            default=0)
+        max_turns = max(self.nb_turns[self.initial_game_number:], default=0)
+
+        print(
+            f"During the {nb_of_games} games, " +
+            f"the snake reached a max length of {max_snake_len} and " +
+            f"survived for {max_turns} turns in the best game."
+        )
 
     def turn_update(self, reward, snake_len):
 

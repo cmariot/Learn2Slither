@@ -28,6 +28,9 @@ class GraphicalUserInterface:
         self.font = pygame.font.get_default_font()
         self._is_closed = False
         self.fps = args.fps
+        self.state = "MENU"
+        self.menu = Menu(self)
+        self.game = Game(self)
 
     def load_snake_images(self):
 
@@ -161,243 +164,6 @@ class GraphicalUserInterface:
 
         return controller.is_ai(), None
 
-    def draw(
-        self,
-        environment: Environment,
-        scores: Score,
-        controller: InterfaceController
-    ):
-
-        """
-        Draw the game board on the pygame window
-        """
-
-        if controller.gui_disabled():
-            return
-
-        self.screen.fill((0, 0, 0))
-        for y, row in enumerate(environment.board):
-            for x, cell in enumerate(row):
-                cell = environment.board[x][y]
-                if (x + y) % 2 == 0:
-                    cell_color = (170, 215, 81)
-                else:
-                    cell_color = (162, 209, 73)
-                pygame.draw.rect(
-                    self.screen,
-                    cell_color,
-                    (
-                        x * self.CELL_SIZE, y * self.CELL_SIZE,
-                        self.CELL_SIZE, self.CELL_SIZE
-                    )
-                )
-                if cell == SNAKE_HEAD or cell == SNAKE_BODY:
-
-                    # Draw the snake image
-                    # Get the direction of the snake
-                    if cell == SNAKE_HEAD:
-
-                        # Get the direction of the snake based on the body list
-                        direction = environment.snake.direction
-
-                        image = {
-                            (0, -1): self.snake_head_up,
-                            (0, 1): self.snake_head_down,
-                            (-1, 0): self.snake_head_left,
-                            (1, 0): self.snake_head_right
-                        }[direction]
-
-                        self.screen.blit(
-                            image,
-                            (x * self.CELL_SIZE, y * self.CELL_SIZE)
-                        )
-
-                    else:
-
-                        snake_length = environment.snake.len()
-                        body_index = environment.snake.get_body_index(x, y)
-
-                        # Tail of the snake
-                        if body_index == snake_length - 1:
-
-                            (
-                                previous_body_x, previous_body_y
-                            ) = environment.snake.body[-2]
-
-                            if previous_body_x == x and previous_body_y < y:
-                                image = self.snake_tail_up
-                            elif previous_body_x == x and previous_body_y > y:
-                                image = self.snake_tail_down
-                            elif previous_body_x < x and previous_body_y == y:
-                                image = self.snake_tail_left
-                            else:
-                                image = self.snake_tail_right
-                            self.screen.blit(
-                                image,
-                                (x * self.CELL_SIZE, y * self.CELL_SIZE)
-                            )
-
-                        # Body of the snake
-                        else:
-
-                            (
-                                previous_body_x, previous_body_y
-                            ) = environment.snake.body[body_index + 1]
-                            (
-                                next_body_x, next_body_y
-                            ) = environment.snake.body[body_index - 1]
-
-                            # Horizontal body
-                            if (
-                                previous_body_x < x and
-                                next_body_x > x or previous_body_x > x and
-                                next_body_x < x
-                            ):
-                                image = self.body_horizontal
-
-                            # Vertical body
-                            elif (
-                                previous_body_y < y and
-                                next_body_y > y or
-                                previous_body_y > y and
-                                next_body_y < y
-                            ):
-                                image = self.body_vertical
-
-                            # Top right corner
-                            elif (
-                                previous_body_x < x and
-                                next_body_y < y or
-                                previous_body_y < y and
-                                next_body_x < x
-                            ):
-                                image = self.body_top_right
-
-                            # Top left corner
-                            elif (
-                                previous_body_x > x and
-                                next_body_y < y or
-                                previous_body_y < y and
-                                next_body_x > x
-                            ):
-                                image = self.body_top_left
-
-                            # Bottom right corner
-                            elif (
-                                previous_body_x < x and
-                                next_body_y > y or
-                                previous_body_y > y and
-                                next_body_x < x
-                            ):
-                                image = self.body_bottom_right
-
-                            # Bottom left corner
-                            else:
-                                image = self.body_bottom_left
-
-                            self.screen.blit(
-                                image,
-                                (x * self.CELL_SIZE, y * self.CELL_SIZE)
-                            )
-                elif cell == RED_APPLE:
-                    self.screen.blit(
-                        self.red_apple,
-                        (
-                            x * self.CELL_SIZE + 0.25 * self.CELL_SIZE,
-                            y * self.CELL_SIZE + 0.25 * self.CELL_SIZE
-                        )
-                    )
-                elif cell == GREEN_APPLE:
-                    self.screen.blit(
-                        self.green_apple,
-                        (
-                            x * self.CELL_SIZE + 0.25 * self.CELL_SIZE,
-                            y * self.CELL_SIZE + 0.25 * self.CELL_SIZE
-                        )
-                    )
-                elif cell == WALL:
-                    pygame.draw.rect(
-                        self.screen,
-                        (87, 138, 52),
-                        (
-                            x * self.CELL_SIZE, y * self.CELL_SIZE,
-                            self.CELL_SIZE, self.CELL_SIZE
-                        )
-                    )
-
-        # Display the score on the screen
-        font = pygame.font.Font(self.font, 24)
-        score_text = font.render(
-            f"Score: {scores.snake_len}",
-            True,
-            (170, 215, 81)
-        )
-        self.screen.blit(score_text, (10, 10))
-
-        # Display the high score on the screen
-        high_score_text = font.render(
-            f"High Score: {scores.high_score}",
-            True,
-            (170, 215, 81)
-        )
-        WINDOW_WIDTH = environment.width * self.CELL_SIZE
-        x = WINDOW_WIDTH - high_score_text.get_width() - 10
-        y = 10
-        self.screen.blit(high_score_text, (x, y))
-
-        # Display the game_number on the screen (center bottom)
-        game_number_text = font.render(
-            f"Game Number: {scores.game_number}",
-            True,
-            (170, 215, 81)
-        )
-        x = (WINDOW_WIDTH - game_number_text.get_width()) / 2
-        y = WINDOW_WIDTH - game_number_text.get_height() - 10
-        self.screen.blit(game_number_text, (x, y))
-
-        pygame.display.flip()
-        self.clock.tick(self.fps)
-
-    def game_over(self, environment, controller: InterfaceController):
-
-        if controller.gui_disabled():
-            return
-
-        # Display a transparent rectangle on the screen
-        transparent = pygame.Surface(
-            ((environment.width - 2) * self.CELL_SIZE,
-             (environment.height - 2) * self.CELL_SIZE)
-        )
-        transparent.set_alpha(128)
-        transparent.fill((170, 215, 81))
-        self.screen.blit(transparent, (self.CELL_SIZE, self.CELL_SIZE))
-
-        font = pygame.font.Font(self.font, 36)
-        game_over_text = font.render(
-            "Game Over",
-            True,
-            (87, 138, 52)
-        )
-        font = pygame.font.Font(self.font, 24)
-        game_over_message_text = font.render(
-            environment.game_over_message,
-            True,
-            (87, 138, 52)
-        )
-
-        # Combine the game over text and the game over message text
-        # to center them on the screen
-        x = (self.screen.get_width() - game_over_text.get_width()) / 2
-        y = (self.screen.get_height() - (
-            game_over_text.get_height() + game_over_message_text.get_height()
-        )) / 2
-        self.screen.blit(game_over_text, (x, y))
-        x = (self.screen.get_width() - game_over_message_text.get_width()) / 2
-        y += game_over_text.get_height()
-        self.screen.blit(game_over_message_text, (x, y))
-        pygame.display.flip()
-        pygame.time.wait(500)
-
     def close(self):
 
         """
@@ -408,170 +174,433 @@ class GraphicalUserInterface:
         self._is_closed = True
         return False, None
 
-    def disable(self):
-
-        rectangle = pygame.Surface(
-            (self.window_width, self.window_height)
-        )
-        rectangle.fill((87, 138, 52))
-        self.screen.blit(rectangle, (0, 0))
-
-        transparent = pygame.Surface(
-            ((self.window_width / self.CELL_SIZE - 2) * self.CELL_SIZE,
-             (self.window_height / self.CELL_SIZE - 2) * self.CELL_SIZE)
-        )
-        transparent.fill((170, 215, 81))
-        self.screen.blit(transparent, (self.CELL_SIZE, self.CELL_SIZE))
-
-        font = pygame.font.Font(self.font, 36)
-        disabled_text = font.render(
-            "GUI Disabled",
-            True,
-            (87, 138, 52)
-        )
-
-        font = pygame.font.Font(self.font, 24)
-        message_text = font.render(
-            "Press 'g' to enable the GUI",
-            True,
-            (87, 138, 52)
-        )
-
-        x = (self.screen.get_width() - disabled_text.get_width()) / 2
-        y = (self.screen.get_height() - (
-            disabled_text.get_height() + message_text.get_height()
-        )) / 2
-        self.screen.blit(disabled_text, (x, y))
-        x = (self.screen.get_width() - message_text.get_width()) / 2
-        y += disabled_text.get_height()
-        self.screen.blit(message_text, (x, y))
-        pygame.display.flip()
-
-    def set_fps(self, fps: int):
-        self.fps = fps
-        self.clock.tick(self.fps)
-
     def is_closed(self) -> bool:
         """
         Return True if the pygame window is closed
         """
         return self._is_closed
 
-    def lobby(self):
+    def set_fps(self, fps: int):
+        self.fps = fps
+        self.clock.tick(self.fps)
 
-        # Display the lobby screen
-        self.screen.fill((0, 0, 0))
 
-        for y in range(self.board_height):
-            for x in range(self.board_width):
+class Menu:
+
+    def __init__(self, gui):
+        self.gui = gui
+
+    def draw_menu(self):
+        self.gui.screen.fill((0, 0, 0))
+        for y in range(self.gui.board_height):
+            for x in range(self.gui.board_width):
                 if (x + y) % 2 == 0:
                     cell_color = (170, 215, 81)
                 else:
                     cell_color = (162, 209, 73)
 
                 if (
-                    x == 0 or x == self.board_width - 1 or
-                    y == 0 or y == self.board_height - 1
+                    x == 0 or x == self.gui.board_width - 1 or
+                    y == 0 or y == self.gui.board_height - 1
                 ):
                     cell_color = (87, 138, 52)
 
                 pygame.draw.rect(
-                    self.screen,
+                    self.gui.screen,
                     cell_color,
                     (
-                        x * self.CELL_SIZE, y * self.CELL_SIZE,
-                        self.CELL_SIZE, self.CELL_SIZE
+                        x * self.gui.CELL_SIZE, y * self.gui.CELL_SIZE,
+                        self.gui.CELL_SIZE, self.gui.CELL_SIZE
                     )
                 )
+        font = pygame.font.Font(self.gui.font, 36)
+        title = font.render("Learn2Slither", True, (87, 138, 52))
+        self.gui.screen.blit(
+            title, (self.gui.window_width // 2 - title.get_width() // 2, 100))
 
-        # Display the title of the game
-        font = pygame.font.Font(self.font, 36)
-        title = font.render(
-            "Learn2Slither",
-            True,
-            (87, 138, 52)
+        title_end_y = 100 + title.get_height()
+
+        button_height = 50
+
+        self.menu_start_button = Button(
+            self.gui.window_width // 2 - 75,
+            title_end_y + 10 + button_height,
+            150, 50, "Start", (87, 138, 52), self.gui.screen
         )
 
-        font = pygame.font.Font(self.font, 24)
-        start = font.render(
-            "Start",
-            True,
-            (87, 138, 52)
+        button_end_y = title_end_y + 10 + self.menu_start_button.height + 10
+
+        self.menu_settings_button = Button(
+            self.gui.window_width // 2 - 75,
+            button_end_y + 10 + button_height,
+            150, 50, "Settings", (87, 138, 52), self.gui.screen
         )
 
-        button_border = pygame.Surface((150, 50))
-        button_border.fill((87, 138, 52))
+        button_end_y += 10 + self.menu_settings_button.height + 10
 
-        button = pygame.Surface((146, 46))
-        button.fill((170, 215, 81))
-
-        font = pygame.font.Font(self.font, 24)
-        settings = font.render(
-            "Settings",
-            True,
-            (87, 138, 52)
+        self.menu_quit_button = Button(
+            self.gui.window_width // 2 - 75,
+            button_end_y + 10 + button_height,
+            150, 50, "Quit", (87, 138, 52), self.gui.screen
         )
-        # x = (self.screen.get_width() - settings.get_width()) / 2
-        # y += button.get_height() / 2 - settings.get_height() / 2
-        # self.screen.blit(settings, (x, y))
-
-        elements = [
-            {
-                "id": 0,
-                "element": title,
-                "x": 0,
-                "y": 0
-            },
-            {
-                "id": 1,
-                "element": button_border,
-                "x": 0,
-                "y": button_border.get_height() + 10
-            },
-            {
-                "id": 2,
-                "element": button,
-                "x": 2,
-                "y": 2
-            },
-            {
-                "id": 3,
-                "element": start,
-                "x": 0,
-                "y": button_border.get_height() / 2 -
-                1 - start.get_height() / 2
-            },
-            {
-                "id": 4,
-                "element": button_border,
-                "x": 0,
-                "y": button_border.get_height() + 10
-            },
-            {
-                "id": 5,
-                "element": button,
-                "x": 2,
-                "y": 2
-            },
-            {
-                "id": 6,
-                "element": settings,
-                "x": 0,
-                "y": button_border.get_height() / 2 - 1 -
-                settings.get_height() / 2
-            }
-        ]
-
-        elements_height = title.get_height() + \
-            2 * (button_border.get_height() + 10)
-
-        x = (self.screen.get_width() - title.get_width()) / 2
-        y = (self.screen.get_height() - elements_height) / 2
-
-        for element in elements:
-            x = (self.screen.get_width() - element["element"].get_width()) / 2
-            y += element["y"]
-            self.screen.blit(element["element"], (x, y))
 
         pygame.display.flip()
-        self.clock.tick(self.fps)
+
+    def handle_menu_events(self, gui: GraphicalUserInterface):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                gui.close()
+                gui.state = "EXIT"
+                return "EXIT"
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                x, y = pygame.mouse.get_pos()
+                if self.menu_start_button.is_clicked(x, y):
+                    self.gui.state = "GAME"
+                elif self.menu_settings_button.is_clicked(x, y):
+                    self.gui.state = "SETTINGS"
+                elif self.menu_quit_button.is_clicked(x, y):
+                    return "EXIT"
+            elif event.type == pygame.KEYDOWN:
+                key = pygame.key.name(event.key)
+                if key == "q" or key == "escape":
+                    self.gui.state = "EXIT"
+                    return "EXIT"
+                elif key == "space":
+                    self.gui.state = "GAME"
+        return None
+
+
+class Game:
+
+    def __init__(self, gui):
+        self.gui = gui
+
+    def draw(
+            self,
+            environment: Environment,
+            scores: Score,
+            controller: InterfaceController
+    ):
+
+        if controller.gui_disabled():
+            return
+
+        self.gui.screen.fill((0, 0, 0))
+        for y, row in enumerate(environment.board):
+            for x, cell in enumerate(row):
+                cell = environment.board[x][y]
+                if (x + y) % 2 == 0:
+                    cell_color = (170, 215, 81)
+                else:
+                    cell_color = (162, 209, 73)
+                pygame.draw.rect(
+                    self.gui.screen,
+                    cell_color,
+                    (
+                        x * self.gui.CELL_SIZE, y * self.gui.CELL_SIZE,
+                        self.gui.CELL_SIZE, self.gui.CELL_SIZE
+                    )
+                )
+                if cell == SNAKE_HEAD or cell == SNAKE_BODY:
+                    if cell == SNAKE_HEAD:
+                        direction = environment.snake.direction
+                        image = {
+                            (0, -1): self.gui.snake_head_up,
+                            (0, 1): self.gui.snake_head_down,
+                            (-1, 0): self.gui.snake_head_left,
+                            (1, 0): self.gui.snake_head_right
+                        }[direction]
+                        self.gui.screen.blit(
+                            image,
+                            (x * self.gui.CELL_SIZE, y * self.gui.CELL_SIZE)
+                        )
+                    else:
+                        snake_length = environment.snake.len()
+                        body_index = environment.snake.get_body_index(x, y)
+                        if body_index == snake_length - 1:
+                            (
+                                previous_body_x, previous_body_y
+                            ) = environment.snake.body[-2]
+                            if previous_body_x == x and previous_body_y < y:
+                                image = self.gui.snake_tail_up
+                            elif previous_body_x == x and previous_body_y > y:
+                                image = self.gui.snake_tail_down
+                            elif previous_body_x < x and previous_body_y == y:
+                                image = self.gui.snake_tail_left
+                            else:
+                                image = self.gui.snake_tail_right
+                            self.gui.screen.blit(
+                                image,
+                                (x * self.gui.CELL_SIZE,
+                                 y * self.gui.CELL_SIZE)
+                            )
+                        else:
+                            (
+                                previous_body_x, previous_body_y
+                            ) = environment.snake.body[body_index + 1]
+                            (
+                                next_body_x, next_body_y
+                            ) = environment.snake.body[body_index - 1]
+                            if (
+                                previous_body_x < x and
+                                next_body_x > x or previous_body_x > x and
+                                next_body_x < x
+                            ):
+                                image = self.gui.body_horizontal
+                            elif (
+                                previous_body_y < y and
+                                next_body_y > y or
+                                previous_body_y > y and
+                                next_body_y < y
+                            ):
+                                image = self.gui.body_vertical
+                            elif (
+                                previous_body_x < x and
+                                next_body_y < y or
+                                previous_body_y < y and
+                                next_body_x < x
+                            ):
+                                image = self.gui.body_top_right
+                            elif (
+                                previous_body_x > x and
+                                next_body_y < y or
+                                previous_body_y < y and
+                                next_body_x > x
+                            ):
+                                image = self.gui.body_top_left
+                            elif (
+                                previous_body_x < x and
+                                next_body_y > y or
+                                previous_body_y > y and
+                                next_body_x < x
+                            ):
+                                image = self.gui.body_bottom_right
+                            else:
+                                image = self.gui.body_bottom_left
+                            self.gui.screen.blit(
+                                image,
+                                (x * self.gui.CELL_SIZE,
+                                 y * self.gui.CELL_SIZE)
+                            )
+                elif cell == RED_APPLE:
+                    self.gui.screen.blit(
+                        self.gui.red_apple,
+                        (
+                            x * self.gui.CELL_SIZE + 0.25 * self.gui.CELL_SIZE,
+                            y * self.gui.CELL_SIZE + 0.25 * self.gui.CELL_SIZE
+                        )
+                    )
+                elif cell == GREEN_APPLE:
+                    self.gui.screen.blit(
+                        self.gui.green_apple,
+                        (
+                            x * self.gui.CELL_SIZE + 0.25 * self.gui.CELL_SIZE,
+                            y * self.gui.CELL_SIZE + 0.25 * self.gui.CELL_SIZE
+                        )
+                    )
+                elif cell == WALL:
+                    pygame.draw.rect(
+                        self.gui.screen,
+                        (87, 138, 52),
+                        (
+                            x * self.gui.CELL_SIZE, y * self.gui.CELL_SIZE,
+                            self.gui.CELL_SIZE, self.gui.CELL_SIZE
+                        )
+                    )
+        font = pygame.font.Font(self.gui.font, 24)
+        score_text = font.render(
+            f"Score: {scores.snake_len}",
+            True,
+            (170, 215, 81)
+        )
+        self.gui.screen.blit(score_text, (10, 10))
+        high_score_text = font.render(
+            f"High Score: {scores.high_score}",
+            True,
+            (170, 215, 81)
+        )
+        WINDOW_WIDTH = environment.width * self.gui.CELL_SIZE
+        x = WINDOW_WIDTH - high_score_text.get_width() - 10
+        y = 10
+        self.gui.screen.blit(high_score_text, (x, y))
+        game_number_text = font.render(
+            f"Game Number: {scores.game_number}",
+            True,
+            (170, 215, 81)
+        )
+        x = (WINDOW_WIDTH - game_number_text.get_width()) / 2
+        y = WINDOW_WIDTH - game_number_text.get_height() - 10
+        self.gui.screen.blit(game_number_text, (x, y))
+
+        # Display the FPS on the screen
+        font = pygame.font.Font(self.gui.font, 12)
+        fps_text = font.render(
+            f"FPS: {self.gui.fps}",
+            True,
+            (170, 215, 81)
+        )
+        x = WINDOW_WIDTH - fps_text.get_width() - 10
+        y = WINDOW_WIDTH - fps_text.get_height() - 10
+        self.gui.screen.blit(fps_text, (x, y))
+
+        pygame.display.flip()
+        self.gui.clock.tick(self.gui.fps)
+
+    def game_over(
+            self,
+            environment: Environment,
+            controller: InterfaceController,
+            gui: GraphicalUserInterface
+    ):
+
+        if controller.gui_disabled():
+            return
+
+        # Display a transparent rectangle on the screen
+        transparent = pygame.Surface(
+            ((environment.width - 2) * self.gui.CELL_SIZE,
+             (environment.height - 2) * self.gui.CELL_SIZE)
+        )
+        transparent.set_alpha(128)
+        transparent.fill((170, 215, 81))
+        gui.screen.blit(transparent, (self.gui.CELL_SIZE, self.gui.CELL_SIZE))
+
+        font = pygame.font.Font(gui.font, 36)
+        game_over_text = font.render(
+            "Game Over",
+            True,
+            (87, 138, 52)
+        )
+        font = pygame.font.Font(gui.font, 24)
+        game_over_message_text = font.render(
+            environment.game_over_message,
+            True,
+            (87, 138, 52)
+        )
+
+        # Combine the game over text and the game over message text
+        # to center them on the screen
+        x = (gui.screen.get_width() - game_over_text.get_width()) / 2
+        y = (gui.screen.get_height() - (
+            game_over_text.get_height() + game_over_message_text.get_height()
+        )) / 2
+        gui.screen.blit(game_over_text, (x, y))
+        x = (gui.screen.get_width() - game_over_message_text.get_width()) / 2
+        y += game_over_text.get_height()
+        gui.screen.blit(game_over_message_text, (x, y))
+        pygame.display.flip()
+        pygame.time.wait(500)
+
+    def disable(self, gui: GraphicalUserInterface):
+
+        """
+        When the GUI is disabled in game, display a message on the screen
+        """
+
+        # green rectangle on the screen
+        rectangle = pygame.Surface(
+            (gui.window_width, gui.window_height)
+        )
+        rectangle.fill((87, 138, 52))
+        gui.screen.blit(rectangle, (0, 0))
+
+        # transparent rectangle
+        transparent = pygame.Surface(
+            ((gui.window_width / gui.CELL_SIZE - 2) * gui.CELL_SIZE,
+             (gui.window_height / gui.CELL_SIZE - 2) * gui.CELL_SIZE)
+        )
+        transparent.fill((170, 215, 81))
+        gui.screen.blit(transparent, (gui.CELL_SIZE, gui.CELL_SIZE))
+
+        # Text
+        font = pygame.font.Font(gui.font, 36)
+        disabled_text = font.render(
+            "GUI Disabled",
+            True,
+            (87, 138, 52)
+        )
+        font = pygame.font.Font(gui.font, 24)
+        message_text = font.render(
+            "Press 'g' to enable the GUI",
+            True,
+            (87, 138, 52)
+        )
+        x = (gui.screen.get_width() - disabled_text.get_width()) / 2
+        y = (gui.screen.get_height() - (
+            disabled_text.get_height() + message_text.get_height()
+        )) / 2
+        gui.screen.blit(disabled_text, (x, y))
+        x = (gui.screen.get_width() - message_text.get_width()) / 2
+        y += disabled_text.get_height()
+        gui.screen.blit(message_text, (x, y))
+
+        pygame.display.flip()
+
+
+class Text:
+
+    def __init__(self, x, y, text, text_color, font, screen):
+        self.x = x
+        self.y = y
+        self.text = text
+        self.text_color = text_color
+        self.font = font
+        self.draw(screen)
+
+    def draw(self, screen):
+        label = self.font.render(self.text, True, self.text_color)
+        screen.blit(
+            label,
+            (self.x + (self.width - label.get_width()) // 2, self.y +
+             (self.height - label.get_height()) // 2)
+        )
+
+
+class Button:
+
+    def __init__(self, x, y, width, height, text, text_color, screen):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.text = text
+        self.text_color = text_color
+        self.draw(screen)
+
+    def draw(self, screen):
+        button_border = pygame.Surface((self.width, self.height))
+        button_border.fill((87, 138, 52))
+        button = pygame.Surface((self.width - 4, self.height - 4))
+        button.fill((170, 215, 81))
+        screen.blit(button_border, (self.x, self.y))
+        screen.blit(button, (self.x + 2, self.y + 2))
+
+        font = pygame.font.Font(pygame.font.get_default_font(), 24)
+        label = font.render(self.text, True, self.text_color)
+        screen.blit(
+            label,
+            (self.x + (self.width - label.get_width()) // 2, self.y +
+             (self.height - label.get_height()) // 2)
+        )
+
+    def is_clicked(self, x, y):
+        return self.x <= x <= self.x + self.width and \
+              self.y <= y <= self.y + self.height
+
+
+class Rectangle:
+
+    def __init__(self, x, y, width, height, color, screen):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.color = color
+        self.draw(screen)
+
+    def draw(self, screen):
+        pygame.draw.rect(
+            screen,
+            self.color,
+            (self.x, self.y, self.width, self.height)
+        )

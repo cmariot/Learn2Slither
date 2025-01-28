@@ -1,20 +1,6 @@
 # TODO LIST:
 
-- [ ] Gestion des fichiers au chargement des scores / modeles (noms, permissions, etc)
-        - [ ] Fichier sans '_' dans le nom
-        - [ ] Fichier avec '_' mais sans int
-        - [ ] Fichier avec '_' et int
-        - [ ] Permissions lecture
-        - [ ] Permissions ecriture
-        - [ ] File not found
-        - [ ] Fichier vide
-        - [ ] Fichier avec des lignes vides
-- [ ] Game loby
-        - [ ] Start
-        - [ ] Options
-        - [ ] Quit
 - [ ] Game over
-        - [ ] Score
-        - [ ] Restart
-        - [ ] Menu
+        - [ ] Score, Stats ...
+- [ ] Fixed size window
 

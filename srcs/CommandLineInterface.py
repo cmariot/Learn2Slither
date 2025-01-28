@@ -27,24 +27,20 @@ class CommandLineInterface:
         self.new_state_str = ""
         self.print(environment, score, controller, interpreter)
 
-    def welcome_message(self, scores=None):
+    def welcome_message(self):
 
         print(CLEAR + BLUE + pyfiglet.figlet_format("Learn2Slither") + RESET)
 
-        if scores is not None:
-            print(
-                f"Game #{scores.game_number} - " +
-                f"Turn #{scores.turn} - " +
-                f"Snake length: {scores.snake_len} - " +
-                f"Score: {scores.score}\n"
-            )
-
         print(
             "Welcome to Learn2Slither!\n" +
-            "Press 'space' to switch between human and AI mode.\n" +
-            "In AI mode, the snake will play by itself.\n" +
-            "In human mode, you can control the snake with the arrow keys.\n" +
-            "Press 'q', 'esc' or use the close button to exit the game.\n"
+            "A reinforcement-learning snake game.\n" +
+            "The goal of the AI is to be the longest and survive.\n\n" +
+
+            "The environment is a grid of cells where the snake can move.\n" +
+            "The snake can only view up, down, left or right.\n" +
+            "The state is a 16 value list representing environment cells.\n" +
+
+            "\nThe game is over when the snake hits a wall or itself."
         )
 
     def print(
@@ -55,13 +51,26 @@ class CommandLineInterface:
         if controller.cli_disabled():
             return
 
+        print(CLEAR + BLUE + pyfiglet.figlet_format("Learn2Slither") + RESET)
+
         if reward is None:
             # Only for the first call
+            self.welcome_message()
             interpreter.interpret(
                 environment, controller, self, is_first_state
             )
+            self.print_env_state()
+            return
 
-        self.welcome_message(scores)
+        print(CLEAR + BLUE + pyfiglet.figlet_format("Learn2Slither") + RESET)
+
+        if scores is not None:
+            print(
+                f"Game #{scores.game_number} - " +
+                f"Turn #{scores.turn} - " +
+                f"Snake length: {scores.snake_len} - " +
+                f"Score: {scores.score}\n"
+            )
         self.print_env_state()
         self.print_action(agent, reward, controller.is_ai())
         self.print_env_state(is_new_state=True)
