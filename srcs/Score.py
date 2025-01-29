@@ -137,7 +137,7 @@ class Score:
 
         plt.close(fig)
 
-        print(f"Score evolution plot saved as {filename}")
+        print(f"Score evolution plot saved as {filename}\n")
 
     def save_scores(self, filename):
 

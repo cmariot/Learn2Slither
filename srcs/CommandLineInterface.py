@@ -25,9 +25,6 @@ class CommandLineInterface:
         self.fps = args.fps
         self.state_str = ""
         self.new_state_str = ""
-        self.print(environment, score, controller, interpreter)
-
-    def welcome_message(self):
 
         print(CLEAR + BLUE + pyfiglet.figlet_format("Learn2Slither") + RESET)
 
@@ -38,28 +35,20 @@ class CommandLineInterface:
 
             "The environment is a grid of cells where the snake can move.\n" +
             "The snake can only view up, down, left or right.\n" +
-            "The state is a 16 value list representing environment cells.\n" +
-
-            "\nThe game is over when the snake hits a wall or itself."
+            "The state is a 16 value list representing environment cells.\n"
         )
 
+        interpreter.interpret(
+            environment, controller, self, True
+        )
+        self.print_env_state()
+
     def print(
-        self, environment, scores, controller, interpreter,
-        reward=None, is_first_state=False, agent=None
+        self, environment, scores, controller,
+        reward=None, agent=None
     ):
 
         if controller.cli_disabled():
-            return
-
-        print(CLEAR + BLUE + pyfiglet.figlet_format("Learn2Slither") + RESET)
-
-        if reward is None:
-            # Only for the first call
-            self.welcome_message()
-            interpreter.interpret(
-                environment, controller, self, is_first_state
-            )
-            self.print_env_state()
             return
 
         print(CLEAR + BLUE + pyfiglet.figlet_format("Learn2Slither") + RESET)

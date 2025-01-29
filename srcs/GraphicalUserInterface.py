@@ -92,78 +92,6 @@ class GraphicalUserInterface:
                 )
             )
 
-    def handle_key_pressed(
-        self,
-        environment: Environment,
-        controller: InterfaceController,
-        cli: CommandLineInterface,
-        scores: Score,
-        agent: Agent
-    ) -> tuple[bool, int]:
-
-        """
-        Handle the key pressed by the user.
-        Return a tuple with a boolean to indicate if the move should be
-        performed and the action to perform as an integer.
-        """
-
-        for event in pygame.event.get():
-
-            if event.type == pygame.QUIT:
-                return self.close()
-
-            elif event.type == pygame.KEYDOWN:
-
-                key = pygame.key.name(event.key)
-
-                if (
-                    key in ('return', 'enter') and
-                    controller.is_ai() and
-                    controller.step_by_step
-                ):
-                    # Perform the next move in step by step mode
-                    return True, None
-
-                elif key == 'space':
-                    # Switch between AI and Human mode
-                    controller.toggle_ai()
-
-                elif key == 'c':
-                    # Enable/disable the CLI
-                    controller.toggle_cli()
-
-                elif key == 'g':
-                    # Enable/disable the GUI
-                    controller.toggle_gui(self, environment, scores)
-
-                elif key == 'p':
-                    # Enable/disable the step by step mode
-                    controller.toggle_step_by_step()
-
-                elif key == 'q' or key == 'escape':
-                    return self.close()
-
-                elif key in ('[+]', '[-]', '-', '='):
-                    # Increase or decrease the FPS (+/- 10 fps)
-                    shift_pressed = pygame.key.get_mods() & pygame.KMOD_SHIFT
-                    controller.change_fps(key, self, cli, shift_pressed)
-
-                elif key == 's':
-                    # Save the model and the score evolution
-                    agent.save(scores)
-
-                elif controller.is_human():
-                    # Handle the key pressed by the user
-                    if key in ("up", "down", "left", "right"):
-                        key = ('up', 'down', 'left', 'right').index(key)
-                        agent.action = key
-                        return True, key
-
-        if controller.step_by_step and controller.is_ai():
-            return False, None
-
-        return controller.is_ai(), None
-
     def close(self):
 
         """
@@ -445,6 +373,78 @@ class Game:
 
         pygame.display.flip()
         self.gui.clock.tick(self.gui.fps)
+
+    def handle_key_pressed(
+        self,
+        environment: Environment,
+        controller: InterfaceController,
+        cli: CommandLineInterface,
+        scores: Score,
+        agent: Agent,
+        gui: GraphicalUserInterface
+    ) -> tuple[bool, int]:
+
+        """
+        Handle the key pressed by the user.
+        Return a tuple with a boolean to indicate if the move should be
+        performed and the action to perform as an integer.
+        """
+
+        for event in pygame.event.get():
+
+            if event.type == pygame.QUIT:
+                return self.gui.close()
+
+            elif event.type == pygame.KEYDOWN:
+
+                key = pygame.key.name(event.key)
+
+                if (
+                    key in ('return', 'enter') and
+                    controller.is_ai() and
+                    controller.step_by_step
+                ):
+                    # Perform the next move in step by step mode
+                    return True, None
+
+                elif key == 'space':
+                    # Switch between AI and Human mode
+                    controller.toggle_ai()
+
+                elif key == 'c':
+                    # Enable/disable the CLI
+                    controller.toggle_cli()
+
+                elif key == 'g':
+                    # Enable/disable the GUI
+                    controller.toggle_gui(self, environment, scores)
+
+                elif key == 'p':
+                    # Enable/disable the step by step mode
+                    controller.toggle_step_by_step()
+
+                elif key == 'q' or key == 'escape':
+                    return self.gui.close()
+
+                elif key in ('[+]', '[-]', '-', '='):
+                    # Increase or decrease the FPS (+/- 10 fps)
+                    controller.change_fps(key, gui, cli)
+
+                elif key == 's':
+                    # Save the model and the score evolution
+                    agent.save(scores)
+
+                elif controller.is_human():
+                    # Handle the key pressed by the user
+                    if key in ("up", "down", "left", "right"):
+                        key = ('up', 'down', 'left', 'right').index(key)
+                        agent.action = key
+                        return True, key
+
+        if controller.step_by_step and controller.is_ai():
+            return False, None
+
+        return controller.is_ai(), None
 
     def game_over(
             self,

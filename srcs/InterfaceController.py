@@ -50,17 +50,18 @@ class InterfaceController:
     def gui_disabled(self):
         return not self.gui_enabled
 
-    def change_fps(self, key, gui, cli, shift_pressed):
+    def change_fps(self, key, gui, cli):
 
         # Increase or decrease the FPS of the game based on the key pressed
         # Keys : '[+]' to increase the FPS and '[-]' to decrease the FPS
 
-        if key == '=' and shift_pressed:
+        if key == '=':
             key = '[+]'
         elif key == '-':
             key = '[-]'
 
         if key not in ['[+]', '[-]']:
+            print(f"Invalid key {key}")
             return
 
         change = -10 if key == '[-]' else 10

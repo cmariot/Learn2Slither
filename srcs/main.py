@@ -50,7 +50,7 @@ def play_step(
     # Train the agent based on the new state and the reward
     agent.train(state, action, reward, new_state, environment.is_game_over)
 
-    cli.print(environment, score, controller, interpreter, reward, agent=agent)
+    cli.print(environment, score, controller, reward, agent)
 
     if environment.is_game_over:
         gui.game.game_over(environment, controller, gui)
@@ -74,8 +74,8 @@ def game(
     while TRAINING_LOOP and environment.is_training(gui, score):
         while GAMING_LOOP and not gui.is_closed():
             gui.game.draw(environment, score, controller)
-            should_perform_move, action = gui.handle_key_pressed(
-                environment, controller, cli, score, agent)
+            should_perform_move, action = gui.game.handle_key_pressed(
+                environment, controller, cli, score, agent, gui)
             if not should_perform_move:
                 continue
             if score.should_save_periodically(1000):
