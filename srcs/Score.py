@@ -81,7 +81,7 @@ class Score:
         # Update the turn
         self.turn += 1
 
-    def game_over_update(self):
+    def game_over_update(self, initial_snake_len=3):
 
         """
         Use this method to update the score evolution at the end of a game.
@@ -90,12 +90,13 @@ class Score:
         self.scores.append(self.score - BIGGER_NEGATIVE_REWARD)
         self.mean_scores.append(int(sum(self.scores) / (self.game_number + 1)))
         self.iterations.append(self.game_number)
-        self.max_snake_lengths.append(self.snake_len)
+        self.max_snake_lengths.append(self.max_snake_len)
         self.nb_turns.append(self.turn)
 
         self.score = 0
         self.turn = 0
         self.max_snake_len = 0
+        self.snake_len = initial_snake_len
         self.game_number += 1
 
     def save(self, directory):

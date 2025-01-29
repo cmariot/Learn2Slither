@@ -22,7 +22,7 @@ EPSILON_DECAY = 1000
 
 
 # Random seed
-random.seed(0)
+# random.seed(4242)
 
 
 class Agent:

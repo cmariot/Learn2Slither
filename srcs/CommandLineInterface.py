@@ -112,7 +112,7 @@ class CommandLineInterface:
             if ('[' in column_name) and (']' in column_name):
                 value = f"{column_name}: {chr(int(value.iloc[0]))}"
             else:
-                value = f"{column_name}: {value.iloc[0]}"
+                value = f"{column_name}: {value.iloc[0]:.2f}"
             max_value_len = max(max_value_len, len(value))
             if i < len(res):
                 lengths.append(len(value))

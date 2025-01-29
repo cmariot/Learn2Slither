@@ -55,7 +55,7 @@ def play_step(
     if environment.is_game_over:
         gui.game.game_over(environment, controller, gui)
         agent.train_long_memory()
-        score.game_over_update()
+        score.game_over_update(environment.snake.initial_snake_length)
         return BREAK
 
     return CONTINUE
@@ -76,6 +76,8 @@ def game(
             gui.game.draw(environment, score, controller)
             should_perform_move, action = gui.game.handle_key_pressed(
                 environment, controller, cli, score, agent, gui)
+            if controller.help_enabled:
+                return
             if not should_perform_move:
                 continue
             if score.should_save_periodically(1000):
@@ -87,6 +89,7 @@ def game(
                 break
         environment.reset()
     agent.save(score)
+    gui.state = "EXIT"
 
 
 def main(args: tuple) -> None:
@@ -117,15 +120,31 @@ def main(args: tuple) -> None:
                 break
         elif gui.state == "GAME":
             game(environment, controller, gui, score, agent, interpreter, cli)
-            break
+            if gui.state == "EXIT":
+                break
+        elif gui.state == "HELP":
+            gui.help.draw()
+            ret = gui.help.handle_key_pressed()
+            if ret == "EXIT":
+                break
+            elif ret == "HOME":
+                gui.state = "MENU"
+                controller.toggle_help()
+            elif ret == "BACK":
+                gui.state = "GAME"
+                controller.toggle_help()
         elif gui.state == "SETTINGS":
-            # gui.draw_settings()
-            # gui.handle_settings_events()
-            pass
+            gui.settings.draw(gui)
+            ret = gui.settings.handle_key_pressed()
+            if ret == "EXIT":
+                break
+            elif ret == "FPS+":
+                controller.change_fps("[+]", gui, cli)
+            elif ret == "FPS-":
+                controller.change_fps("-", gui, cli)
+            elif ret == "BACK":
+                gui.state = "MENU"
         elif gui.state == "EXIT":
-            break
-        else:
-            print(f"GUI.State: {gui.state}")
             break
 
 

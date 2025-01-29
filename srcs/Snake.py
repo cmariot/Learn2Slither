@@ -7,7 +7,7 @@ from constants import (
 from Directions import Directions
 
 
-random.seed(0)
+# random.seed(0)
 
 
 class Snake:

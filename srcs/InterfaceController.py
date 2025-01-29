@@ -12,6 +12,7 @@ class InterfaceController:
         self.ai_enabled = is_ai
         self.cli_enabled = cli_enabled
         self.gui_enabled = gui_enabled
+        self.help_enabled = False
 
     def toggle_ai(self):
         self.ai_enabled = not self.ai_enabled
@@ -37,6 +38,9 @@ class InterfaceController:
         else:
             print("GUI disabled")
             gui.game.disable(gui)
+
+    def toggle_help(self):
+        self.help_enabled = not self.help_enabled
 
     def is_ai(self):
         return self.ai_enabled

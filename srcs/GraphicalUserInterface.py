@@ -31,6 +31,8 @@ class GraphicalUserInterface:
         self.state = "MENU"
         self.menu = Menu(self)
         self.game = Game(self)
+        self.settings = Settings(self)
+        self.help = Help(self)
 
     def load_snake_images(self):
 
@@ -169,7 +171,7 @@ class Menu:
         self.menu_quit_button = Button(
             self.gui.window_width // 2 - 75,
             button_end_y + 10 + button_height,
-            150, 50, "Quit", (87, 138, 52), self.gui.screen
+            150, 50, "Exit", (87, 138, 52), self.gui.screen
         )
 
         pygame.display.flip()
@@ -335,41 +337,64 @@ class Game:
                             self.gui.CELL_SIZE, self.gui.CELL_SIZE
                         )
                     )
+
+        WINDOW_WIDTH = WINDOW_HEIGHT = environment.width * self.gui.CELL_SIZE
+
+        # Display the score on the screen
         font = pygame.font.Font(self.gui.font, 24)
         score_text = font.render(
-            f"Score: {scores.snake_len}",
+            f"Snake len: {scores.snake_len}",
             True,
             (170, 215, 81)
         )
-        self.gui.screen.blit(score_text, (10, 10))
+        x = 10
+        y = WINDOW_HEIGHT - self.gui.CELL_SIZE + \
+            (self.gui.CELL_SIZE - score_text.get_height()) / 2
+        self.gui.screen.blit(score_text, (x, y))
+
+        max_snake_len = max(scores.max_snake_len, max(
+            scores.max_snake_lengths[scores.initial_game_number:],
+            default=scores.max_snake_len
+        ))
         high_score_text = font.render(
-            f"High Score: {scores.high_score}",
+            f"Max: {max_snake_len}",
             True,
             (170, 215, 81)
         )
-        WINDOW_WIDTH = environment.width * self.gui.CELL_SIZE
         x = WINDOW_WIDTH - high_score_text.get_width() - 10
-        y = 10
         self.gui.screen.blit(high_score_text, (x, y))
+
+        # Game number
         game_number_text = font.render(
-            f"Game Number: {scores.game_number}",
+            f"Game #{scores.game_number}",
             True,
             (170, 215, 81)
         )
         x = (WINDOW_WIDTH - game_number_text.get_width()) / 2
-        y = WINDOW_WIDTH - game_number_text.get_height() - 10
+        y = (self.gui.CELL_SIZE - game_number_text.get_height()) / 2
         self.gui.screen.blit(game_number_text, (x, y))
 
         # Display the FPS on the screen
         font = pygame.font.Font(self.gui.font, 12)
+        fps = int(self.gui.clock.get_fps())
         fps_text = font.render(
-            f"FPS: {self.gui.fps}",
+            f"FPS: {fps} / {self.gui.fps}",
             True,
             (170, 215, 81)
         )
-        x = WINDOW_WIDTH - fps_text.get_width() - 10
-        y = WINDOW_WIDTH - fps_text.get_height() - 10
+        x = 10
+        y = (self.gui.CELL_SIZE - fps_text.get_height()) / 2
         self.gui.screen.blit(fps_text, (x, y))
+
+        # Key mapping button
+        self.help_button = Button(
+            WINDOW_WIDTH - 70,
+            (self.gui.CELL_SIZE - game_number_text.get_height()) / 2,
+            60,
+            game_number_text.get_height(),
+            "Help", (87, 138, 52),
+            self.gui.screen, 12
+        )
 
         pygame.display.flip()
         self.gui.clock.tick(self.gui.fps)
@@ -417,7 +442,7 @@ class Game:
 
                 elif key == 'g':
                     # Enable/disable the GUI
-                    controller.toggle_gui(self, environment, scores)
+                    controller.toggle_gui(self.gui, environment, scores)
 
                 elif key == 'p':
                     # Enable/disable the step by step mode
@@ -440,6 +465,16 @@ class Game:
                         key = ('up', 'down', 'left', 'right').index(key)
                         agent.action = key
                         return True, key
+
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+
+                # Click on the help button
+                x, y = pygame.mouse.get_pos()
+
+                if self.help_button.is_clicked(x, y):
+                    controller.toggle_help()
+                    gui.state = "HELP"
+                    return False, None
 
         if controller.step_by_step and controller.is_ai():
             return False, None
@@ -545,6 +580,7 @@ class Text:
         self.text = text
         self.text_color = text_color
         self.font = font
+        self.width, self.height = self.font.size(self.text)
         self.draw(screen)
 
     def draw(self, screen):
@@ -558,13 +594,16 @@ class Text:
 
 class Button:
 
-    def __init__(self, x, y, width, height, text, text_color, screen):
+    def __init__(
+            self, x, y, width, height, text, text_color, screen, font_size=24
+    ):
         self.x = x
         self.y = y
         self.width = width
         self.height = height
         self.text = text
         self.text_color = text_color
+        self.font_size = font_size
         self.draw(screen)
 
     def draw(self, screen):
@@ -575,7 +614,7 @@ class Button:
         screen.blit(button_border, (self.x, self.y))
         screen.blit(button, (self.x + 2, self.y + 2))
 
-        font = pygame.font.Font(pygame.font.get_default_font(), 24)
+        font = pygame.font.Font(pygame.font.get_default_font(), self.font_size)
         label = font.render(self.text, True, self.text_color)
         screen.blit(
             label,
@@ -604,3 +643,232 @@ class Rectangle:
             self.color,
             (self.x, self.y, self.width, self.height)
         )
+
+
+class Settings:
+
+    def __init__(self, gui):
+        self.gui = gui
+
+    def draw(self, gui: GraphicalUserInterface):
+        self.gui.screen.fill((0, 0, 0))
+        for y in range(self.gui.board_height):
+            for x in range(self.gui.board_width):
+                if (x + y) % 2 == 0:
+                    cell_color = (170, 215, 81)
+                else:
+                    cell_color = (162, 209, 73)
+
+                if (
+                    x == 0 or x == self.gui.board_width - 1 or
+                    y == 0 or y == self.gui.board_height - 1
+                ):
+                    cell_color = (87, 138, 52)
+
+                pygame.draw.rect(
+                    self.gui.screen,
+                    cell_color,
+                    (
+                        x * self.gui.CELL_SIZE, y * self.gui.CELL_SIZE,
+                        self.gui.CELL_SIZE, self.gui.CELL_SIZE
+                    )
+                )
+        font = pygame.font.Font(self.gui.font, 36)
+        title = font.render("Settings", True, (87, 138, 52))
+
+        x = self.gui.window_width // 2 - title.get_width() // 2
+        y = 100
+        self.gui.screen.blit(title, (x, y))
+
+        # FPS Settings
+        y += title.get_height() + 10
+        x = (self.gui.window_width - 168) // 2
+        self.settings_fps_text = Text(
+            x, y,
+            f"FPS: {gui.fps}", (87, 138, 52),
+            pygame.font.Font(self.gui.font, 24), self.gui.screen
+        )
+
+        # Decrease FPS button
+        x += self.settings_fps_text.width + 20
+        self.settings_decrease_fps_button = Button(
+            x, y, self.settings_fps_text.height, self.settings_fps_text.height,
+            "-", (87, 138, 52), self.gui.screen, 12
+        )
+
+        # Increase FPS button
+        x += self.settings_decrease_fps_button.width + 10
+        self.settings_increase_fps_button = Button(
+            x, y, self.settings_fps_text.height, self.settings_fps_text.height,
+            "+", (87, 138, 52), self.gui.screen, 12
+        )
+
+        # Back button
+        x = self.gui.window_width // 2 - 75
+        y += self.settings_fps_text.height + 20
+        self.settings_back_button = Button(
+            x, y, 150, 50, "Back", (87, 138, 52), self.gui.screen, 18
+        )
+
+        pygame.display.flip()
+
+    def handle_key_pressed(self):
+
+        for event in pygame.event.get():
+
+            if event.type == pygame.QUIT:
+                self.gui.close()
+                return "EXIT"
+
+            elif event.type == pygame.KEYDOWN:
+
+                key = pygame.key.name(event.key)
+
+                if key == 'q' or key == 'escape':
+                    self.gui.close()
+                    return "EXIT"
+                elif key in ('[+]', '='):
+                    return "FPS+"
+                elif key in ('-', '[-]'):
+                    return "FPS-"
+
+            # Handle the mouse click
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                x, y = pygame.mouse.get_pos()
+                if self.settings_increase_fps_button.is_clicked(x, y):
+                    return "FPS+"
+                elif self.settings_decrease_fps_button.is_clicked(x, y):
+                    return "FPS-"
+                elif self.settings_back_button.is_clicked(x, y):
+                    self.gui.state = "MENU"
+                    return "BACK"
+
+        return None
+
+
+class Help:
+
+    def __init__(self, gui):
+        self.gui = gui
+
+    def draw(self):
+
+        """
+        Display the list of key mappings of the game
+        """
+
+        key_mapping = {
+            "Toggle AI/Human mode": "Space",
+            "In AI mode": "The agent plays",
+            "In Human mode": "Arrow keys to move",
+            "Toggle CLI": "C",
+            "Toggle GUI": "G",
+            "Step by step": "P",
+            "In step by step mode": "Enter to perform the next move",
+            "Quit": "Q or Esc",
+            "Save the model": "S",
+            "Increase/Decrease FPS": "+/-",
+        }
+
+        self.gui.screen.fill((0, 0, 0))
+
+        for y in range(self.gui.board_height):
+            for x in range(self.gui.board_width):
+                if (x + y) % 2 == 0:
+                    cell_color = (170, 215, 81)
+                else:
+                    cell_color = (162, 209, 73)
+
+                if (
+                    x == 0 or x == self.gui.board_width - 1 or
+                    y == 0 or y == self.gui.board_height - 1
+                ):
+                    cell_color = (87, 138, 52)
+
+                pygame.draw.rect(
+                    self.gui.screen,
+                    cell_color,
+                    (
+                        x * self.gui.CELL_SIZE, y * self.gui.CELL_SIZE,
+                        self.gui.CELL_SIZE, self.gui.CELL_SIZE
+                    )
+                )
+
+        font = pygame.font.Font(self.gui.font, 36)
+        title = font.render("Help", True, (87, 138, 52))
+        x = self.gui.window_width // 2 - title.get_width() // 2
+        y = 50
+        self.gui.screen.blit(title, (x, y))
+
+        font = pygame.font.Font(self.gui.font, 14)
+
+        max_len = 0
+        max_text = ""
+        for key, value in key_mapping.items():
+            if len(key) + len(value) > max_len:
+                max_text = f"{key}: {value}"
+                max_len = len(max_text)
+
+        key_text = font.render(
+            max_text,
+            True,
+            (87, 138, 52)
+        )
+
+        x = self.gui.window_width // 2 - key_text.get_width() // 2
+        y += title.get_height() + 10
+
+        for key, value in key_mapping.items():
+
+            key_text = font.render(
+                f"{key}: {value}",
+                True,
+                (87, 138, 52)
+            )
+            self.gui.screen.blit(key_text, (x, y))
+            y += key_text.get_height() + 10
+
+        # Back button
+        x = self.gui.window_width // 2 - 75
+        y = self.gui.window_height - 100
+        self.help_back_button = Button(
+            self.gui.board_width * self.gui.CELL_SIZE - 70,
+            (self.gui.CELL_SIZE - 24) / 2,
+            60,
+            24,
+            "Back", (87, 138, 52),
+            self.gui.screen, 12
+        )
+
+        # Return to the menu button (right top corner)
+        self.help_home_button = Button(
+            x, y, 150, 50, "Return home", (87, 138, 52), self.gui.screen, 18
+        )
+
+        pygame.display.flip()
+
+    def handle_key_pressed(self):
+
+        for event in pygame.event.get():
+
+            if event.type == pygame.QUIT:
+                self.gui.close()
+                return "EXIT"
+
+            elif event.type == pygame.KEYDOWN:
+
+                key = pygame.key.name(event.key)
+
+                if key == 'q' or key == 'escape':
+                    self.gui.close()
+                    return "EXIT"
+
+            # Handle the mouse click
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                x, y = pygame.mouse.get_pos()
+                if self.help_back_button.is_clicked(x, y):
+                    return "BACK"
+                elif self.help_home_button.is_clicked(x, y):
+                    return "HOME"
+
+        return None
