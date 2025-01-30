@@ -28,7 +28,7 @@ class GraphicalUserInterface:
         self.font = pygame.font.get_default_font()
         self._is_closed = False
         self.fps = args.fps
-        self.state = "MENU"
+        self.state = "MENU" if not args.no_gui else "GAME"
         self.menu = Menu(self)
         self.game = Game(self)
         self.settings = Settings(self)
@@ -64,7 +64,6 @@ class GraphicalUserInterface:
 
         for apple, path in apples:
             setattr(self, apple, pygame.image.load(path))
-            # Rescale the images
             setattr(
                 self, apple,
                 pygame.transform.scale(
@@ -472,6 +471,8 @@ class Game:
                 x, y = pygame.mouse.get_pos()
 
                 if self.help_button.is_clicked(x, y):
+                    if controller.gui_disabled():
+                        return False, None
                     controller.toggle_help()
                     gui.state = "HELP"
                     return False, None

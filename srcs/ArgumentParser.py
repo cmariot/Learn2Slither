@@ -79,6 +79,20 @@ class ArgumentParser:
             action=self.IsPositiveCondition
         )
 
+        # No GUI
+        self.parser.add_argument(
+            "--no-gui",
+            action="store_true",
+            help="Disable the GUI."
+        )
+
+        # No CLI
+        self.parser.add_argument(
+            "--no-cli",
+            action="store_true",
+            help="Disable the CLI."
+        )
+
     def parse_args(self):
 
         """

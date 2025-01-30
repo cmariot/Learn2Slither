@@ -58,10 +58,11 @@ class Interpreter:
         #     GREEN_APPLE: ord('G'),
         #     RED_APPLE: ord('R'),
         #     WALL: ord('W'),
+        #     ' ': ord(' ')
         # }
         # for x_ in range(0, len(state)):
         #     for y_ in range(0, len(state)):
-        #         value = state[x_][y_]
+        #         value = state[y_][x_]
         #         if x_ == x:
         #             x_list.append(value)
         #         if y_ == y:

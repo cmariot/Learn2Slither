@@ -3,6 +3,7 @@ class InterfaceController:
     def __init__(
                 self,
                 args: tuple,
+                gui: object = None,
                 is_ai: bool = True,
                 cli_enabled: bool = True,
                 gui_enabled: bool = True
@@ -13,6 +14,9 @@ class InterfaceController:
         self.cli_enabled = cli_enabled
         self.gui_enabled = gui_enabled
         self.help_enabled = False
+
+        if args.no_gui:
+            self.toggle_gui(gui, None, None)
 
     def toggle_ai(self):
         self.ai_enabled = not self.ai_enabled

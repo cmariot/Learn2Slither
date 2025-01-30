@@ -16,7 +16,7 @@ class CommandLineInterface:
 
     """
 
-    def __init__(self, args, environment, score, controller, interpreter):
+    def __init__(self, args, environment, controller, interpreter):
 
         """
         Constructor of the CommandLineInterface class.
@@ -25,6 +25,9 @@ class CommandLineInterface:
         self.fps = args.fps
         self.state_str = ""
         self.new_state_str = ""
+
+        if args.no_cli:
+            controller.toggle_cli()
 
         print(CLEAR + BLUE + pyfiglet.figlet_format("Learn2Slither") + RESET)
 
@@ -42,6 +45,10 @@ class CommandLineInterface:
             environment, controller, self, True
         )
         self.print_env_state()
+
+        if args.no_cli:
+            print("CLI disabled, the game will run in the background")
+            print("Press 'c' to enable the CLI")
 
     def print(
         self, environment, scores, controller,
@@ -147,9 +154,8 @@ class CommandLineInterface:
         if is_ai:
             print(
                 f"Agent chose action: {action:<5} " +
-                f"({agent.choice_type}, " +
-                f"epsilon = {agent.epsilon * 100:.2f}% - " +
-                f"memory length = {len(agent.memory)}) - " +
+                f"(epsilon = {agent.epsilon * 100:.2f}% - " +
+                f"{agent.choice_type}) - " +
                 f"Reward: {reward}\n"
             )
         else:

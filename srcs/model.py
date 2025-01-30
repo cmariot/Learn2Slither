@@ -4,7 +4,6 @@ import torch.optim as optim
 import torch.nn.functional as F
 
 
-# PyTorch seed
 # torch.manual_seed(0)
 
 

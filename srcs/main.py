@@ -105,12 +105,10 @@ def main(args: tuple) -> None:
     interpreter = Interpreter()
     agent = Agent(args)
 
-    controller = InterfaceController(args)
-    gui = GraphicalUserInterface(environment.height, environment.width, args)
     score = Score(args)
-    cli = CommandLineInterface(
-        args, environment, score, controller, interpreter
-    )
+    gui = GraphicalUserInterface(environment.height, environment.width, args)
+    controller = InterfaceController(args, gui)
+    cli = CommandLineInterface(args, environment, controller, interpreter)
 
     while True:
 

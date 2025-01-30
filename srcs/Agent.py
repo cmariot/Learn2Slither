@@ -21,7 +21,6 @@ EPSILON_END = 0.001
 EPSILON_DECAY = 1000
 
 
-# Random seed
 # random.seed(4242)
 
 
@@ -117,8 +116,6 @@ class Agent:
 
         # Échantillonner un batch aléatoire
         batch = self.memory.sample(batch_size)
-        states, actions, rewards, next_states, game_over = zip(*batch)
-
         states, actions, rewards, next_states, game_over = zip(*batch)
 
         # Entraîner le modèle sur le batch
