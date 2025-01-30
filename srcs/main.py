@@ -118,10 +118,12 @@ def main(args: tuple) -> None:
             gui.menu.draw_menu()
             if gui.menu.handle_menu_events(gui) == "EXIT":
                 break
+
         elif gui.state == "GAME":
             game(environment, controller, gui, score, agent, interpreter, cli)
             if gui.state == "EXIT":
                 break
+
         elif gui.state == "HELP":
             gui.help.draw()
             ret = gui.help.handle_key_pressed()
@@ -130,9 +132,11 @@ def main(args: tuple) -> None:
             elif ret == "HOME":
                 gui.state = "MENU"
                 controller.toggle_help()
+                environment.reset()
             elif ret == "BACK":
                 gui.state = "GAME"
                 controller.toggle_help()
+
         elif gui.state == "SETTINGS":
             gui.settings.draw(gui)
             ret = gui.settings.handle_key_pressed()
@@ -144,6 +148,7 @@ def main(args: tuple) -> None:
                 controller.change_fps("-", gui, cli)
             elif ret == "BACK":
                 gui.state = "MENU"
+
         elif gui.state == "EXIT":
             break
 
