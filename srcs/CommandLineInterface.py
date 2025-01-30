@@ -173,7 +173,7 @@ class CommandLineInterface:
     def set_fps(self, fps):
         self.fps = fps
 
-    def print_exception(exception: Exception) -> None:
+    def print_exception(exception: Exception, args=None) -> None:
 
         """
         Prints detailed information about an exception, including its type,
@@ -183,6 +183,10 @@ class CommandLineInterface:
 
         if not isinstance(exception, Exception):
             raise TypeError("The argument should be an exception.")
+
+        if args and args.debug is False:
+            print(f"{RED}An exception occurred:{RESET} {exception}")
+            return
 
         print(f"{RED}An exception occurred:{RESET}\n")
 

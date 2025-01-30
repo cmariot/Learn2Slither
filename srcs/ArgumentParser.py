@@ -93,6 +93,13 @@ class ArgumentParser:
             help="Disable the CLI."
         )
 
+        # Debug mode
+        self.parser.add_argument(
+            "--debug",
+            action="store_true",
+            help="Enable the debug mode."
+        )
+
     def parse_args(self):
 
         """

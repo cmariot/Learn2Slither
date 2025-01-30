@@ -157,6 +157,6 @@ if __name__ == "__main__":
         args = parser.parse_args()
         main(args)
     except Exception as exception:
-        CommandLineInterface.print_exception(exception)
+        CommandLineInterface.print_exception(exception, args)
     except KeyboardInterrupt:
         print("\nExiting...")
